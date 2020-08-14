@@ -37,9 +37,19 @@ use std::ffi::{CStr, CString};
 
 use serde_json;
 
+/**
+ * Returned by `current_challenge_id`,
+ * passed to `automaton_set_challenge`
+ * and as the first argument of all functions starting with `challenge`.
+ */
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ChallengeId(u16);
 
+/**
+ * Represents an Automaton allocated by `allocate_automaton`.
+ * Automatically deallocates itself when dropped.
+ * Passed as the first argument of all functions starting with `automaton`.
+ */
 #[derive(Debug)]
 pub struct AllocatedAutomaton
 {
@@ -58,6 +68,11 @@ impl Drop for AllocatedAutomaton
 	}
 }
 
+/**
+ * Represents an AI allocated by `allocate_ai`.
+ * Automatically deallocates itself when dropped.
+ * Passed as the first argument of all functions starting with `ai`.
+ */
 #[derive(Debug)]
 pub struct AllocatedAi
 {
