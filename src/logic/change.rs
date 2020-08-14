@@ -1,0 +1,30 @@
+/**/
+
+use crate::logic::player::*;
+
+use serde_derive::{Deserialize, Serialize};
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Change(serde_json::Value);
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ChangeSet(Vec<ChangeSetItem>);
+
+impl ChangeSet
+{
+	pub fn get(&self, player: PlayerColor) -> Vec<Change>
+	{
+		self.0
+			.iter()
+			.filter(|&item| item.vision.contains(&player))
+			.map(|item| item.change.clone())
+			.collect()
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ChangeSetItem
+{
+	change: Change,
+	vision: Vec<PlayerColor>,
+}
