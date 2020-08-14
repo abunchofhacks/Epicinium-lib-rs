@@ -1,7 +1,7 @@
 /**/
 
 use crate::error::{InitializationError, InterfaceError};
-use crate::log::severity::Severity;
+use crate::log::Severity;
 use crate::logic::ai;
 use crate::logic::automaton;
 use crate::logic::change::{Change, ChangeSet};
