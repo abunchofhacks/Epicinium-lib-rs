@@ -10,10 +10,6 @@ Epicinium is being developed by [A Bunch of Hacks](https://abunchofhacks.coop),
 a worker cooperative for video game and software development from the Netherlands.
 Contact us at [info@epicinium.nl](mailto:info@epicinium.nl).
 
-## Known issues
-
-The underlying libepicinium is currently only available on 64-bit Linux.
-
 ## License
 
 This library was created by [A Bunch of Hacks](https://abunchofhacks.coop).
