@@ -1,0 +1,35 @@
+#pragma once
+#include "header.hpp"
+
+
+enum class Notice : uint8_t
+{
+	NONE = 0,
+	ORDERINVALID,
+	HALTED,
+	DESTINATIONOCCUPIED,
+	SUBJECTOCCUPIED,
+	TARGETOCCUPIED,
+	SUBJECTKILLED,
+	NOTARGET,
+	UNBUILDABLE,
+	UNWALKABLE,
+	INACCESSIBLE,
+	LACKINGSTACKS,
+	LACKINGPOWER,
+	LACKINGMONEY,
+	OCCUPIEDBYENEMY,
+	ACTIVEATTACK,
+	RETALIATIONATTACK,
+	FOCUSATTACK,
+	TRIGGEREDFOCUSATTACK,
+	TRIGGEREDLOCKDOWNATTACK,
+	OPPORTUNITYATTACK,
+	RESIGNED,
+	ROUNDLIMIT,
+};
+
+Notice parseNotice(const std::string& str);
+const char* stringify(const Notice& notice);
+
+std::ostream& operator<<(std::ostream& os, const Notice& notice);
