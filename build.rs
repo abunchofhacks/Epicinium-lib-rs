@@ -36,7 +36,15 @@ fn main()
 		.status()
 		.expect("failed to copy files");
 
-	let variant = if cfg!(debug_assertions)
+	let variant = if cfg!(feature = "version-is-dev")
+	{
+		"dev"
+	}
+	else if cfg!(feature = "candidate")
+	{
+		"candidate"
+	}
+	else if cfg!(debug_assertions)
 	{
 		"dev"
 	}
@@ -53,6 +61,7 @@ fn main()
 	let working_path = std::path::Path::new(&working_dir);
 	std::process::Command::new("make")
 		.arg("libepicinium")
+		.arg("--jobs")
 		.current_dir(working_path)
 		.status()
 		.expect("failed to call make");

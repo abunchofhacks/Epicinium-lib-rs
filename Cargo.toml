@@ -11,6 +11,10 @@ repository = "https://github.com/abunchofhacks/Epicinium-lib-rs"
 keywords = ["gamedev"]
 
 [features]
+defaults = []
+
+candidate = []
+version-is-dev = []
 
 [dependencies]
 serde = "^1.0"
