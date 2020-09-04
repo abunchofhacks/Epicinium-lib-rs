@@ -8,7 +8,8 @@ readme = "README.md"
 description = "Rust bindings for libepicinium, the game logic library of the strategy game Epicinium."
 homepage = "https://abunchofhacks.coop"
 repository = "https://github.com/abunchofhacks/Epicinium-lib-rs"
-keywords = ["gamedev"]
+keywords = ["game","gamedev","ffi",]
+categories = ["games", "api-bindings"]
 
 [features]
 defaults = []

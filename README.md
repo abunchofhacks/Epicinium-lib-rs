@@ -3,7 +3,7 @@
 Rust bindings for libepicinium, a library containing the core functionality of the strategy game [Epicinium](https://epicinium.nl).
 This library implements Epicinium's game logic to load maps and calculate subsequent game states.
 
-The rest of Epicinium, including C++ source files for this library, will be open-sourced in the near future.
+The rest of Epicinium will be open-sourced in the near future.
 It will also be coming soon to [Steam](https://epicinium.nl/steam).
 
 Epicinium is being developed by [A Bunch of Hacks](https://abunchofhacks.coop),
@@ -11,7 +11,15 @@ a worker cooperative for video game and software development from the Netherland
 Contact us at [info@epicinium.nl](mailto:info@epicinium.nl).
 
 ## Compilation
+
 The underlying source code is compiled using a Makefile, so GNU make must be installed to be able to compile. Compilation on Windows most likely requires GnuWin32 as the Makefile relies on portable behavior of `cp` and `mkdir`.
+
+## Dependencies
+
+*  GNU make
+*  GnuWin32 (on Windows)
+*  [JsonCpp](https://github.com/open-source-parsers/jsoncpp) (source included)
+*  [Plog](https://github.com/SergiusTheBest/plog) (source included)
 
 ## License
 
