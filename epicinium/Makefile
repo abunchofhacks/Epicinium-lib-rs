@@ -1,3 +1,27 @@
+#
+# Part of Epicinium
+# developed by A Bunch of Hacks.
+#
+# Copyright (c) 2017-2020 A Bunch of Hacks
+#
+# Epicinium is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Epicinium is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# [authors:]
+# Sander in 't Veld (sander@abunchofhacks.coop)
+# Daan Mulder (daan@abunchofhacks.coop)
+#
+
 # Make flag
 MAKEFLAGS = --warn-undefined-variable
 
@@ -164,8 +188,12 @@ WFLAGS_ADDED =
 
 WFLAGS_E   ?= -Werror
 
+# override me from the command line (yes/no)
+ENABLE_STEAM = no
+#
+
 DEFINES     = $(DEFINES_PFM) $(DEFINES_DEV) $(DEFINES_CONFIG)\
-              $(DEFINES_LIC) $(DEFINES_ADDED)
+              $(DEFINES_STM) $(DEFINES_LIC) $(DEFINES_ADDED)
 
 ifeq ($(TARGET),debian32)
 DEFINES_PFM = -DPLATFORMDEBIAN32
@@ -208,6 +236,12 @@ endif
 # configure me from CONFIGFILE
 DEFINES_CONFIG ?=
 #
+
+ifeq ($(ENABLE_STEAM),yes)
+DEFINES_STM = -DSTEAM_ENABLED=true
+else
+DEFINES_STM =
+endif
 
 DEFINES_LIC              =
 .obj/.lic/%: DEFINES_LIC = -DSTATIC_WRITER_ENABLED=false\
@@ -301,6 +335,40 @@ LFLAGS_DISC = bin/libdiscord-rpc.so
 endif
 endif
 
+ifeq ($(ENABLE_STEAM),yes)
+LFLAGS_STM = $(LFLAGS_STEAM_REAL)
+STM_DEP = $(STEAM_REAL_DEPENDENCIES)
+else
+LFLAGS_STM ?=
+STM_DEP ?=
+endif
+
+ifeq ($(TARGET),windows64)
+LFLAGS_STEAM_REAL = -lsteam_api64
+STEAM_REAL_DEPENDENCIES = bin/steam_api64.lib bin/steam_api64.dll
+STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin/win64
+endif
+ifeq ($(TARGET),windows32)
+LFLAGS_STEAM_REAL = -lsteam_api
+STEAM_REAL_DEPENDENCIES = bin/libsteam_api.lib bin/libsteam_api.dll
+STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin
+endif
+ifeq ($(TARGET),osx64)
+LFLAGS_STEAM_REAL = -lsteam_api
+STEAM_REAL_DEPENDENCIES = bin/libsteam_api.dylib
+STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin/osx
+endif
+ifeq ($(TARGET),debian64)
+LFLAGS_STEAM_REAL = bin/libsteam_api.so
+STEAM_REAL_DEPENDENCIES = bin/libsteam_api.so
+STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin/linux64
+endif
+ifeq ($(TARGET),debian32)
+LFLAGS_STEAM_REAL = bin/libsteam_api.so
+STEAM_REAL_DEPENDENCIES = bin/libsteam_api.so
+STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin/linux32
+endif
+
 ifeq ($(detected_OS),Darwin) # Mac OS X
 FIX_LIBSTD_DYLIB = install_name_tool -change\
                    "/usr/local/opt/gcc@4.8/lib/gcc/4.8/libstdc++.6.dylib"\
@@ -352,13 +420,17 @@ CU_ELEMENTS       := $(shell grep -HoE "^\#include \"[a-z.]+\""\
                      $(wildcard src/*/.cu-*.cpp)\
                      | sed -e "s/.cu-.*:\#include \"//" -e "s/\"//")
 
-# Determine source files
+
+# override me from the command line (yes/no)
 ENABLE_CU   = yes
-ifeq ($(ENABLE_CU),)
-listsrc     = $(wildcard src/$(1)/*.cpp)
-else
+#
+
+# Determine source files
+ifeq ($(ENABLE_CU),yes)
 listsrc     = $(wildcard src/$(1)/.cu-*.cpp)\
               $(filter-out $(CU_ELEMENTS),$(wildcard src/$(1)/*.cpp))
+else
+listsrc     = $(wildcard src/$(1)/*.cpp)
 endif
 
 # Source
@@ -481,11 +553,11 @@ libepicinium_OUT = bin/libepicinium.a
 $(foreach tool,$(TAILNAMES),$(eval $(tool)_OUT = $(tool:lib%=bin/ai%.so)))
 endif
 quicktest_OUT =
-ALL_OUT   = $(foreach name,$(NAMES),$($(name)_OUT))
+ALL_OUT = $(foreach name,$(NAMES),$($(name)_OUT))
 
 # Build parts
 launcher = LNCH
-game = CPP MAIN CORE AINT UNET ENGN SDL IMGU GL SSL CURL FZIP DISC LAST
+game = CPP MAIN CORE AINT UNET ENGN SDL IMGU GL SSL CURL FZIP DISC STM LAST
 server = CPP SERV CORE AINT NETW MESG SDLN SSL CURL FZIP LAST
 editor = CPP EDIT CORE AINT ENGN SDL IMGU GL LAST
 essai = CPP ESSA CORE AINT LAST
@@ -548,7 +620,7 @@ SPECIFIES   = $(patsubst %/,.dep/specify-%,\
               $(filter-out package/,$(wildcard */)))
 SPCFD_FILES = $(patsubst %,.dep/specify-%,$(SPECIFIEDS))
 SPECIFIEDS  = accounts ai archive audio bin brainstorm docs downloads essailogs\
-              keys libs logs maps patches packages pictures recordings\
+              fonts keys libs logs maps patches packages pictures recordings\
               resources rulesets sessions sprites src tools
 
 # Targets
@@ -735,6 +807,9 @@ endif
 .dep/%.d: ;
 .PRECIOUS: .dep/%.d
 
+$(STEAM_REAL_DEPENDENCIES): bin/%: $(STEAM_ARCHIVE_REDIS_DIR)/%
+	cp $< $@
+
 $(VERSIONFILE): src/common/version.cpp src/common/version.hpp $(VARIANTFILE)
 $(VERSIONFILE): | $(printversion_OUT)
 $(VERSIONFILE): | $(dir $(VERSIONFILE)).dir_fix
@@ -823,10 +898,9 @@ MKDIR = mkdir
 endif
 
 PICTURES         = $(filter-out pictures/kickstarter,\
-                   $(filter-out pictures/discord,\
-                   $(wildcard pictures/*)))
-PICTURES_DISCORD = $(filter-out pictures/discord/avatars,\
-                   $(wildcard pictures/discord/*))
+                   $(filter-out pictures/steam/avatars,\
+                   $(filter-out pictures/discord/avatars,\
+                   $(wildcard pictures/*))))
 RULESETS         = $(filter-out $(wildcard rulesets/*test*),\
                    $(filter-out $(wildcard rulesets/*internal*),\
                    $(filter-out $(wildcard rulesets/*-rc*.json),\
@@ -854,8 +928,8 @@ package: | $(SPECIFIES)
 	cp -RP resources ./package/
 	cp -RP sprites ./package/
 	cp -RP $(PICTURES) ./package/pictures/
-	cp -RP $(PICTURES_DISCORD) ./package/pictures/discord/
 	cp -RP audio ./package/
+	cp -RP fonts ./package/
 	cp -RP INSTALL.txt ./package/
 	cp -RP accounts/ABOUT.txt ./package/accounts/
 	cp -RP sessions/ABOUT.txt ./package/sessions/

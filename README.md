@@ -10,6 +10,9 @@ Epicinium is being developed by [A Bunch of Hacks](https://abunchofhacks.coop),
 a worker cooperative for video game and software development from the Netherlands.
 Contact us at [info@epicinium.nl](mailto:info@epicinium.nl).
 
+## Compilation
+The underlying source code is compiled using a Makefile, so GNU make must be installed to be able to compile. Compilation on Windows most likely requires GnuWin32 as the Makefile relies on portable behavior of `cp` and `mkdir`.
+
 ## License
 
 This library was created by [A Bunch of Hacks](https://abunchofhacks.coop).
