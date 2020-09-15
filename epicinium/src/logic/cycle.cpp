@@ -104,20 +104,22 @@ const char* phaseDescription(const Daytime& daytime, const Phase& phase)
 			{
 				case Daytime::LATE:
 				{
-					return "In the Weather phase,"
+					return _(""
+					"In the Weather phase,"
 					" the season changes and crops can grow."
 					" In Spring, trees can grow."
 					" In Autumn, global warming worsens."
-					;
+					"");
 				}
 				break;
 
 				case Daytime::EARLY:
 				{
-					return "In the Night phase,"
+					return _(""
+					"In the Night phase,"
 					" building tiles gain power depending on their surroundings"
 					" and generate income."
-					;
+					"");
 				}
 				break;
 			}
@@ -126,27 +128,30 @@ const char* phaseDescription(const Daytime& daytime, const Phase& phase)
 
 		case Phase::PLANNING:
 		{
-			return "In the Planning phase,"
+			return _(""
+			"In the Planning phase,"
 			" players decide which orders to give to their units and tiles."
 			" Orders are executed in the Action phase."
-			;
+			"");
 		}
 		break;
 
 		case Phase::ACTION:
 		{
-			return "In the Action phase,"
+			return _(""
+			"In the Action phase,"
 			" players take turns automatically executing their orders."
-			;
+			"");
 		}
 		break;
 
 		case Phase::DECAY:
 		{
-			return "In the Decay phase,"
+			return _(""
+			"In the Decay phase,"
 			" any Frostbite, Firestorm or Gas present on the map deals damage."
 			" Gas spreads out or dissipates."
-			;
+			"");
 		}
 		break;
 

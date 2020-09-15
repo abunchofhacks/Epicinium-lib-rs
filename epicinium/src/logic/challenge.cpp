@@ -33,11 +33,6 @@
 #include "roundinfo.hpp"
 
 
-Challenge::Id Challenge::current()
-{
-	return MORALE;
-}
-
 static int tileCount(const Board& board, const TileType& tiletype)
 {
 	int count = 0;

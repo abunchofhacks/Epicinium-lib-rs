@@ -576,6 +576,7 @@ perfalizer = CPP CMON JSON LAST
 printversion = CPP CMON JSON LAST
 printprimaries = CPP CMON JSON LAST
 printsizes = CPP CORE LAST
+steamlocalizer = CPP CORE AINT LAST
 libepicinium = CPP CMON_LIC LGIC_LIC JSON_PIC AINT_LIC LAST
 libquickquack = CMON_PIC LGIC_PIC JSON_PIC AINT_PIC
 libhungryhippo = CMON_PIC LGIC_PIC JSON_PIC AINT_PIC
@@ -613,6 +614,10 @@ else
 LIBRARIES   = $(filter-out bin/ai%,$(wildcard bin/*.so*))
 endif
 endif
+
+# Languages
+LOCALES     = $(patsubst translations/%.po,%,$(wildcard translations/*.po))
+LOC_FILES   = $(patsubst %,bin/loc/%/LC_MESSAGES/$(GAMENAME).mo,$(LOCALES))
 
 # Each top-level folder needs to have a dummy rule somewhere in the Makefile,
 # so we don't accidentally forget to update the Makefile when adding a new one.
@@ -737,6 +742,9 @@ $(printprimaries_OUT): $(printprimaries_OBJ) $(printprimaries_DEP)
 
 $(printsizes_OUT): $(printsizes_OBJ) $(printsizes_DEP)
 	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(printsizes_LFLAGS)
+
+$(steamlocalizer_OUT): $(steamlocalizer_OBJ) $(steamlocalizer_DEP)
+	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(steamlocalizer_LFLAGS)
 
 $(libepicinium_OUT): $(libepicinium_OBJ) $(libepicinium_DEP)
 	$(COMPILE_ALB) -o $@ $(filter %.o,$^)
@@ -891,6 +899,41 @@ osx64: | $(dir $(TARGETFILE)).dir_fix
 	cp -RP archive/osx64/. ./
 .PHONY: osx64
 
+translations/$(GAMENAME).pot: $(OUR_SOURCES)
+	xgettext --keyword=_ --language=C++ --sort-by-file \
+		--add-comments=TRANSLATOR \
+		--copyright-holder="A Bunch of Hacks" \
+		--package-name="Epicinium" --package-version="0.35.0" \
+		--msgid-bugs-address="sander@abunchofhacks.coop" \
+		-o $@ $(OUR_SOURCES)
+
+translations/en_US.po: translations/$(GAMENAME).pot
+	msginit --locale=en_US.utf-8 --no-translator -o $@ -i $<
+
+translations/%.po: translations/$(GAMENAME).pot
+	msgmerge --update --backup=never $@ $<
+	touch $@
+
+translations/xx_AA.po: translations/en_US.po
+	msgfilter --keep-header -o $@ -i $< sed -e 's/\([aeiuoyAEIUOY]\)/\1\1/g'
+
+translations/xx_XX.po: translations/en_US.po
+	msgfilter --keep-header -o $@ -i $< \
+		sed -e 's/\([aeiuoyAEIUOY]\+\)/測/g' \
+			-e 's/\([^%a-zA-Z]\)\([a-zA-Z]\+\)/\1試/g' \
+			-e 's/^\([a-zA-Z]\+\)/試/g'
+
+bin/loc/%/LC_MESSAGES/$(GAMENAME).mo: translations/%.po \
+		| bin/loc/%/LC_MESSAGES/.dir_fix
+	msgfmt --verbose --check -o $@ $<
+
+update-loc: $(LOC_FILES)
+	@echo "updated"
+.PHONY: update-loc
+
+translations/steam_rich_presence.vdf: $(LOC_FILES) $(steamlocalizer_OUT)
+	"./$(steamlocalizer_OUT)" > $@
+
 ifeq ($(detected_shell),cmd)
 MKDIR = "mkdir.exe"
 else
@@ -909,7 +952,7 @@ RULESETS         = $(filter-out $(wildcard rulesets/*test*),\
 MAPS             = $(filter-out $(wildcard maps/*test*),\
                    $(wildcard maps/*.map))
 
-package: game
+package: game $(LOC_FILES)
 package: | $(SPECIFIES)
 	rm -rf ./package/
 	$(MKDIR) -p ./package
@@ -947,6 +990,7 @@ package: | $(SPECIFIES)
 	cp -RP $(game_OUT) ./package/$(game_OUT)
 	cp -RP bin/ABOUT.txt ./package/bin/
 	cp -RP $(LIBRARIES) ./package/bin/
+	cp -RP bin/loc ./package/bin/
 .PHONY: package
 
 # Evaluate PVERSION only when it is called because VERSIONFILE might not exist;

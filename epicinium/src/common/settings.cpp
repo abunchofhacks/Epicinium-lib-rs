@@ -51,6 +51,7 @@ Settings::Settings(std::unique_ptr<Settings> fallback) :
 	scale(this, "scale"),
 	framerate(this, "framerate"),
 	finishRendering(this, "finish-rendering"),
+	steam(this, "steam"),
 	discord(this, "discord"),
 	allowDiscordLogin(this, "allow-discord-login"),
 	useApi(this, "use-api"),
@@ -58,6 +59,7 @@ Settings::Settings(std::unique_ptr<Settings> fallback) :
 	port(this, "port"),
 	patchmode(this, "patchmode"),
 	selectormode(this, "selectormode"),
+	artpanmode(this, "artpanmode"),
 	stomtToken(this, "stomt-token"),
 	memento(this, nullptr),
 	cameraScrollingWasd(this, "camera-scrolling-wasd"),
@@ -83,6 +85,18 @@ Settings::Settings(std::unique_ptr<Settings> fallback) :
 	hideIdleAnimations(this, "hide-idle-animations"),
 	hideLayouts(this, "hide-layouts"),
 	showViewport(this, "show-viewport"),
+	language(this, "language"),
+	fontFilename(this, "font-filename"),
+	fontSize(this, "font-size"),
+	fontSizeTextInput(this, "font-size-text-input"),
+	fontSizeMenuHeader(this, "font-size-menu-header"),
+	fontSizeMenuButton(this, "font-size-menu-button"),
+	fontSizePlayButton(this, "font-size-play-button"),
+	fontSizeReadyButton(this, "font-size-ready-button"),
+	fontSizeWallet(this, "font-size-wallet"),
+	fontSizeOrderNumeral(this, "font-size-order-numeral"),
+	fontSizeTutorial(this, "font-size-tutorial"),
+	fontSizeHeadline(this, "font-size-headline"),
 	settings(this, "settings", "defaults")
 {}
 
@@ -97,6 +111,7 @@ Settings::Settings() :
 	allowDiscordLogin = false;
 	patchmode = detectPatchMode();
 	selectormode = SelectorMode::FIGURE;
+	artpanmode = ArtPanMode::AUTO;
 	cameraScrollingWasd = true;
 	cameraScrollingArrows = true;
 	cameraScrollingEdge = true;
@@ -207,6 +222,13 @@ size_t Settings::push(Setting<SelectorMode>* it)
 	return index;
 }
 
+size_t Settings::push(Setting<ArtPanMode>* it)
+{
+	size_t index = _artpanmodelist.size();
+	_artpanmodelist.emplace_back(it);
+	return index;
+}
+
 size_t Settings::push(Setting<PatchMode>* it)
 {
 	size_t index = _patchmodelist.size();
@@ -248,6 +270,11 @@ Setting<ScreenMode>& Settings::get(size_t index, ScreenMode /**/)
 Setting<SelectorMode>& Settings::get(size_t index, SelectorMode /**/)
 {
 	return *_selectormodelist[index];
+}
+
+Setting<ArtPanMode>& Settings::get(size_t index, ArtPanMode /**/)
+{
+	return *_artpanmodelist[index];
 }
 
 Setting<PatchMode>& Settings::get(size_t index, PatchMode /**/)
@@ -334,6 +361,10 @@ bool Settings::parse(const Json::Value& root)
 	{
 		used |= setting->parse(root);
 	}
+	for (auto setting : _artpanmodelist)
+	{
+		used |= setting->parse(root);
+	}
 	for (auto setting : _patchmodelist)
 	{
 		used |= setting->parse(root);
@@ -376,6 +407,9 @@ bool Settings::override(const char* arg)
 
 PatchMode Settings::detectPatchMode()
 {
+#if STEAM_ENABLED
+	return PatchMode::STEAM;
+#else
 	if (System::isDirectory(".itch"))
 	{
 		return PatchMode::ITCHIO;
@@ -388,6 +422,7 @@ PatchMode Settings::detectPatchMode()
 	{
 		return PatchMode::SERVER;
 	}
+#endif
 }
 
 void Settings::store(Json::Value& root)
@@ -401,6 +436,10 @@ void Settings::store(Json::Value& root)
 		setting->store(root);
 	}
 	for (auto setting : _selectormodelist)
+	{
+		setting->store(root);
+	}
+	for (auto setting : _artpanmodelist)
 	{
 		setting->store(root);
 	}
@@ -487,6 +526,10 @@ Json::Value Settings::flattenIntoJson()
 	{
 		if (setting->defined()) setting->definition().store(root);
 	}
+	for (auto setting : _artpanmodelist)
+	{
+		if (setting->defined()) setting->definition().store(root);
+	}
 	for (auto setting : _patchmodelist)
 	{
 		if (setting->defined()) setting->definition().store(root);
@@ -505,4 +548,54 @@ Json::Value Settings::flattenIntoJson()
 	}
 
 	return root;
+}
+
+int Settings::getFontSize() const
+{
+	return fontSize.value(8 * scale.value(2));
+}
+
+int Settings::getFontSizeTextInput() const
+{
+	return fontSizeTextInput.value(getFontSize());
+}
+
+int Settings::getFontSizeMenuHeader() const
+{
+	return fontSizeMenuHeader.value(2 * getFontSize());
+}
+
+int Settings::getFontSizeMenuButton() const
+{
+	return fontSizeMenuButton.value(getFontSize());
+}
+
+int Settings::getFontSizePlayButton() const
+{
+	return fontSizePlayButton.value(3 * getFontSize());
+}
+
+int Settings::getFontSizeReadyButton() const
+{
+	return fontSizeReadyButton.value(2 * getFontSize());
+}
+
+int Settings::getFontSizeWallet() const
+{
+	return fontSizeWallet.value(2 * getFontSize());
+}
+
+int Settings::getFontSizeOrderNumeral() const
+{
+	return fontSizeOrderNumeral.value(2 * getFontSize());
+}
+
+int Settings::getFontSizeTutorial() const
+{
+	return fontSizeTutorial.value(getFontSize());
+}
+
+int Settings::getFontSizeHeadline() const
+{
+	return fontSizeHeadline.value(3 * getFontSize());
 }

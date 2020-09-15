@@ -602,6 +602,14 @@ pub fn challenge_discord_image_key(id: ChallengeId) -> String
 	s.to_string_lossy().to_string()
 }
 
+pub fn challenge_steam_short_key(id: ChallengeId) -> String
+{
+	let s: &CStr = unsafe {
+		CStr::from_ptr(epicinium_challenge_steam_short_key(id.0)) //
+	};
+	s.to_string_lossy().to_string()
+}
+
 pub fn challenge_mission_briefing(id: ChallengeId) -> serde_json::Value
 {
 	let num = unsafe { epicinium_challenge_briefing_size(id.0) };
@@ -772,6 +780,7 @@ extern "C" {
 	fn epicinium_challenge_display_name(id: u16) -> *const c_char;
 	fn epicinium_challenge_panel_picture_name(id: u16) -> *const c_char;
 	fn epicinium_challenge_discord_image_key(id: u16) -> *const c_char;
+	fn epicinium_challenge_steam_short_key(id: u16) -> *const c_char;
 	fn epicinium_challenge_briefing_size(id: u16) -> usize;
 	fn epicinium_challenge_briefing_key(id: u16, i: usize) -> *const c_char;
 	fn epicinium_challenge_briefing_value(id: u16, i: usize) -> *const c_char;

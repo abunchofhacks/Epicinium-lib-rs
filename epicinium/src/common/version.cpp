@@ -42,7 +42,7 @@ Version Version::current()
 
 Version Version::latest()
 {
-	return Version(0, 35, 0, 2);
+	return Version(0, 35, 1, 1);
 }
 
 std::istream& operator>>(std::istream &is, Version &version);

@@ -61,6 +61,7 @@ public:
 	std::string getDisplayName();
 	std::string getPanelPictureName();
 	std::string getDiscordImageKey();
+	std::string getSteamShortKey();
 	Json::Value getMissionBriefing();
 
 	static const char* getKey(const Challenge::Id& id);
@@ -72,5 +73,6 @@ public:
 	static const char* getDisplayName(const Challenge::Id& id);
 	static const char* getPanelPictureName(const Challenge::Id& id);
 	static const char* getDiscordImageKey(const Challenge::Id& id);
+	static const char* getSteamShortKey(const Challenge::Id& id);
 	static const char* getBrief(const Challenge::Id& id, const Brief& brief);
 };

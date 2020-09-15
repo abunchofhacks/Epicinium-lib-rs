@@ -83,6 +83,28 @@ const char* stringify(const Player& player)
 	return "error";
 }
 
+const char* colorPlayerName(const Player& player)
+{
+	switch (player)
+	{
+		case Player::RED:      return _("Red Player");
+		case Player::BLUE:     return _("Blue Player");
+		case Player::YELLOW:   return _("Yellow Player");
+		case Player::TEAL:     return _("Teal Player");
+		case Player::BLACK:    return _("Black Player");
+		case Player::PINK:     return _("Pink Player");
+		case Player::INDIGO:   return _("Indigo Player");
+		case Player::PURPLE:   return _("Purple Player");
+
+		case Player::BLIND:
+		case Player::OBSERVER:
+		case Player::SELF:
+		case Player::NONE:
+		break;
+	}
+	return "error";
+}
+
 std::ostream& operator<<(std::ostream& os, const Player& player)
 {
 	return os << stringify(player);

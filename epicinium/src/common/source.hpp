@@ -44,6 +44,15 @@
 #define PLOG_FORCE_UTF8_MESSAGE 1
 #include "libs/plog/Log.h"
 
+#if INTL_ENABLED
+#include <libintl.h>
+#define _(STRING) gettext(STRING)
+// This is a separate macro to prevent xgettext from detecting it.
+#define GETTEXT_FROM_SERVER(STRING) gettext(STRING)
+#else
+#define _(STRING) (STRING)
+#endif
+
 /* If we are running dev, we want to be able to call profiling macros. */
 #if VALGRIND_INTEGRATION_ENABLED
 #include <valgrind/memcheck.h>
@@ -155,6 +164,19 @@ inline std::string sanitize(const std::string& input)
 	return output;
 }
 
+/* UTF8 */
+constexpr bool isContinuationByte(char c)
+{
+	// If the two most-significant bits are 10, i.e. the byte is 10xxxxxx,
+	// this is a UTF8 continuation byte.
+	return ((((uint8_t) c) & 0xC0) == 0x80);
+}
+
+constexpr bool isNonContinuationByte(char c)
+{
+	return !isContinuationByte(c);
+}
+
 /* Get the size of a locally declared array. */
 template<size_t SIZE, class T>
 constexpr size_t array_size(T (&/*arr*/)[SIZE])
@@ -166,4 +188,28 @@ constexpr size_t array_size(T (&/*arr*/)[SIZE])
 constexpr const char* jsonify(bool value)
 {
 	return value ? "true" : "false";
+}
+
+/* Format like printf but returning a string. */
+template<typename... Args>
+inline std::string format(const char* format, Args... args)
+{
+	std::vector<char> buffer(1024);
+	int n = snprintf(buffer.data(), buffer.size(), format, args...);
+	DEBUG_ASSERT(n >= 0);
+	if (n < 0)
+	{
+		return "";
+	}
+	if (((size_t) n) >= buffer.size())
+	{
+		buffer.resize(n + 1);
+		n = snprintf(buffer.data(), buffer.size(), format, args...);
+		DEBUG_ASSERT(n >= 0);
+		if (n < 0)
+		{
+			return "";
+		}
+	}
+	return std::string(buffer.begin(), buffer.begin() + n);
 }

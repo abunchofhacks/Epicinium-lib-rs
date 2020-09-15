@@ -27,7 +27,8 @@
 
 enum class ScreenMode : uint8_t { WINDOWED, BORDERLESS, FULLSCREEN, DESKTOP };
 enum class SelectorMode : uint8_t { CONTEXT, FIGURE };
-enum class PatchMode : uint8_t { NONE, SERVER, ITCHIO, GAMEJOLT };
+enum class ArtPanMode : uint8_t { NONE, AUTO, CURSOR };
+enum class PatchMode : uint8_t { NONE, SERVER, ITCHIO, GAMEJOLT, STEAM };
 
 class Settings;
 

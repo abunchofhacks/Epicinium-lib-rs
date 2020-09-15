@@ -176,14 +176,42 @@ const char* AIChallenge::getDisplayName(const Challenge::Id& id)
 {
 	switch (id)
 	{
-		case SHOWCASE: return "Showcase";
-		case ELIMINATION: return "Elimination";
-		case EVERYTHINGISFREE: return "Everything is Free";
-		case TRAMPLE: return "Tank Derby";
-		case TRAMPLE2: return "Tank Derby";
-		case HIGHSPEED: return "High Speed";
-		case INVESTMENT: return "Economic Growth";
-		case MORALE: return "Morale";
+		case SHOWCASE:
+		{
+			return _("Showcase");
+		}
+		break;
+		case ELIMINATION:
+		{
+			return _("Elimination");
+		}
+		break;
+		case EVERYTHINGISFREE:
+		{
+			return _("Everything is Free");
+		}
+		break;
+		case TRAMPLE:
+		case TRAMPLE2:
+		{
+			return _("Tank Derby");
+		}
+		break;
+		case HIGHSPEED:
+		{
+			return _("High Speed");
+		}
+		break;
+		case INVESTMENT:
+		{
+			return _("Economic Growth");
+		}
+		break;
+		case MORALE:
+		{
+			return _("Morale");
+		}
+		break;
 	}
 	return "";
 }
@@ -230,6 +258,27 @@ const char* AIChallenge::getDiscordImageKey(const Challenge::Id& id)
 	return "";
 }
 
+std::string AIChallenge::getSteamShortKey()
+{
+	return AIChallenge::getSteamShortKey(_id);
+}
+
+const char* AIChallenge::getSteamShortKey(const Challenge::Id& id)
+{
+	switch (id)
+	{
+		case SHOWCASE: return "showcase";
+		case ELIMINATION: return "elimination";
+		case EVERYTHINGISFREE: return "everythingisfree";
+		case TRAMPLE: return "trample";
+		case TRAMPLE2: return "trample";
+		case HIGHSPEED: return "highspeed";
+		case INVESTMENT: return "investment";
+		case MORALE: return "morale";
+	}
+	return "";
+}
+
 const char* AIChallenge::stringify(const Brief& brief)
 {
 	switch (brief)
@@ -265,10 +314,10 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 		{
 			switch (brief)
 			{
-				case Brief::GREETING: return ""
+				case Brief::GREETING: return _(""
 				"Listen up, Commander!"
-				"";
-				case Brief::DESCRIPTION: return ""
+				"");
+				case Brief::DESCRIPTION: return _(""
 				"The enemy has dug in among the mountains in the east."
 				" The longer they are allowed to stay,"
 				" the more damage their industriousness will do"
@@ -277,26 +326,26 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 				" There are some neutral City and Industry tiles"
 				" in the northwest of the map."
 				" Feel free to capture them with your Rifleman units."
-				"";
-				case Brief::OBJECTIVE: return ""
+				"");
+				case Brief::OBJECTIVE: return _(""
 				"Defeat your opponent by occupying, capturing"
 				" or destroying all of their City tiles."
 				" At the end of the game,"
 				" you get 1 point for every Grass and Forest tile that remains."
-				"";
-				case Brief::FIRST_STAR: return ""
+				"");
+				case Brief::FIRST_STAR: return _(""
 				"Get 1 point."
-				"";
-				case Brief::SECOND_STAR: return ""
+				"");
+				case Brief::SECOND_STAR: return _(""
 				"Get 25 points."
-				"";
-				case Brief::THIRD_STAR: return ""
+				"");
+				case Brief::THIRD_STAR: return _(""
 				"Get 40 points."
-				"";
-				case Brief::SENDOFF: return ""
+				"");
+				case Brief::SENDOFF: return _(""
 				"Now go out there and lay claim to this region"
 				" while there's still something worth claiming!"
-				"";
+				"");
 			}
 		}
 		break;
@@ -304,33 +353,33 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 		{
 			switch (brief)
 			{
-				case Brief::GREETING: return ""
+				case Brief::GREETING: return _(""
 				"Listen up, Commander!"
-				"";
-				case Brief::DESCRIPTION: return ""
+				"");
+				case Brief::DESCRIPTION: return _(""
 				"Some of the population of this peninsula has rebelled!"
 				" Eliminate all of the rebels in the area"
 				" using your tanks, gunners and sappers."
 				" Don't worry about capturing cities; they will"
 				" fall back in line once you have quelled the rebellion."
-				"";
-				case Brief::OBJECTIVE: return ""
+				"");
+				case Brief::OBJECTIVE: return _(""
 				"Defeat your opponent by eliminating all of their units."
 				" At the end of the game,"
 				" you get 1 point for every Grass and Forest tile that remains."
-				"";
-				case Brief::FIRST_STAR: return ""
+				"");
+				case Brief::FIRST_STAR: return _(""
 				"Eliminate all enemy units."
-				"";
-				case Brief::SECOND_STAR: return ""
+				"");
+				case Brief::SECOND_STAR: return _(""
 				"Get at least 25 points."
-				"";
-				case Brief::THIRD_STAR: return ""
+				"");
+				case Brief::THIRD_STAR: return _(""
 				"Do not destroy any City, Farm or Industry tiles."
-				"";
-				case Brief::SENDOFF: return ""
+				"");
+				case Brief::SENDOFF: return _(""
 				"Go get rid of those rebels!"
-				"";
+				"");
 			}
 		}
 		break;
@@ -338,34 +387,34 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 		{
 			switch (brief)
 			{
-				case Brief::GREETING: return ""
+				case Brief::GREETING: return _(""
 				"Greetings, Commander!"
-				"";
-				case Brief::DESCRIPTION: return ""
+				"");
+				case Brief::DESCRIPTION: return _(""
 				"Who needs money anyway?"
 				"\n"
 				"In this challenge,"
 				" all unit and tile costs have been reduced to zero,"
 				" and buildings do not generate any income at night."
-				"";
-				case Brief::OBJECTIVE: return ""
+				"");
+				case Brief::OBJECTIVE: return _(""
 				"Defeat your opponent by occupying, capturing"
 				" or destroying all of their City tiles."
 				" At the end of the game,"
 				" you get 1 point for every Grass and Forest tile that remains."
-				"";
-				case Brief::FIRST_STAR: return ""
+				"");
+				case Brief::FIRST_STAR: return _(""
 				"Get 1 point."
-				"";
-				case Brief::SECOND_STAR: return ""
+				"");
+				case Brief::SECOND_STAR: return _(""
 				"Get 30 points."
-				"";
-				case Brief::THIRD_STAR: return ""
+				"");
+				case Brief::THIRD_STAR: return _(""
 				"Get 80 points."
-				"";
-				case Brief::SENDOFF: return ""
+				"");
+				case Brief::SENDOFF: return _(""
 				"Good luck!"
-				"";
+				"");
 			}
 		}
 		break;
@@ -374,36 +423,36 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 		{
 			switch (brief)
 			{
-				case Brief::GREETING: return ""
+				case Brief::GREETING: return _(""
 				"Well hello there, partner!"
-				"";
-				case Brief::DESCRIPTION: return ""
+				"");
+				case Brief::DESCRIPTION: return _(""
 				"Are you looking for some no-fuss action?"
 				" Do you want to wake up"
 				" at the sound of tanks thundering down the open fields?"
 				" Then you should partake in the"
 				" spectactular Tank Derby!"
 				" Hop in one of them beauty's and show 'em what you got!"
-				"";
-				case Brief::OBJECTIVE: return ""
+				"");
+				case Brief::OBJECTIVE: return _(""
 				"Defeat all three opponents by destroying their industry"
 				" and eliminating all of their tanks."
 				" Tanks are cheaper than normal and can do regular attacks,"
 				" but only have one hitpoint."
 				" you get 1 point for every Grass and Forest tile that remains."
-				"";
-				case Brief::FIRST_STAR: return ""
+				"");
+				case Brief::FIRST_STAR: return _(""
 				"Eliminate all enemy tanks."
-				"";
-				case Brief::SECOND_STAR: return ""
+				"");
+				case Brief::SECOND_STAR: return _(""
 				"Get at least 4 points."
-				"";
-				case Brief::THIRD_STAR: return ""
+				"");
+				case Brief::THIRD_STAR: return _(""
 				"Get at least 10 points."
-				"";
-				case Brief::SENDOFF: return ""
+				"");
+				case Brief::SENDOFF: return _(""
 				"Let's rumble!"
-				"";
+				"");
 			}
 		}
 		break;
@@ -411,10 +460,10 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 		{
 			switch (brief)
 			{
-				case Brief::GREETING: return ""
+				case Brief::GREETING: return _(""
 				"Greetings, Commander!"
-				"";
-				case Brief::DESCRIPTION: return ""
+				"");
+				case Brief::DESCRIPTION: return _(""
 				"What happens when we, ahum, \"spill\""
 				" a year's worth of energy drinks"
 				" into the water supply of the entire region?"
@@ -423,25 +472,25 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 				"In this challenge,"
 				" all units have their movement speed"
 				" increased by 2."
-				"";
-				case Brief::OBJECTIVE: return ""
+				"");
+				case Brief::OBJECTIVE: return _(""
 				"Defeat your opponent by occupying, capturing"
 				" or destroying all of their City tiles."
 				" At the end of the game,"
 				" you get 1 point for every Grass and Forest tile that remains."
-				"";
-				case Brief::FIRST_STAR: return ""
+				"");
+				case Brief::FIRST_STAR: return _(""
 				"Get 1 point."
-				"";
-				case Brief::SECOND_STAR: return ""
+				"");
+				case Brief::SECOND_STAR: return _(""
 				"Get 30 points."
-				"";
-				case Brief::THIRD_STAR: return ""
+				"");
+				case Brief::THIRD_STAR: return _(""
 				"Get 80 points."
-				"";
-				case Brief::SENDOFF: return ""
+				"");
+				case Brief::SENDOFF: return _(""
 				"Good luck!"
-				"";
+				"");
 			}
 		}
 		break;
@@ -449,30 +498,30 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 		{
 			switch (brief)
 			{
-				case Brief::GREETING: return ""
+				case Brief::GREETING: return _(""
 				"Greetings, Commander!"
-				"";
-				case Brief::DESCRIPTION: return ""
+				"");
+				case Brief::DESCRIPTION: return _(""
 				"In this challenge,"
 				" there are no enemies to fight or opponents to defeat."
 				" Just focus on growing your economy."
-				"";
-				case Brief::OBJECTIVE: return ""
+				"");
+				case Brief::OBJECTIVE: return _(""
 				"The game ends after the second winter night."
 				" Your score is equal to how much money you have at the end."
-				"";
-				case Brief::FIRST_STAR: return ""
+				"");
+				case Brief::FIRST_STAR: return _(""
 				"Get 21 points."
-				"";
-				case Brief::SECOND_STAR: return ""
+				"");
+				case Brief::SECOND_STAR: return _(""
 				"Get 86 points."
-				"";
-				case Brief::THIRD_STAR: return ""
+				"");
+				case Brief::THIRD_STAR: return _(""
 				"Get 132 points."
-				"";
-				case Brief::SENDOFF: return ""
+				"");
+				case Brief::SENDOFF: return _(""
 				"Good luck!"
-				"";
+				"");
 			}
 		}
 		break;
@@ -480,10 +529,10 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 		{
 			switch (brief)
 			{
-				case Brief::GREETING: return ""
+				case Brief::GREETING: return _(""
 				"Greetings, Commander!"
-				"";
-				case Brief::DESCRIPTION: return ""
+				"");
+				case Brief::DESCRIPTION: return _(""
 				"In this challenge you will use \"Morale\" instead of money"
 				" and power to produce units,"
 				" which is gained on the field of battle."
@@ -491,26 +540,26 @@ const char* AIChallenge::getBrief(const Challenge::Id& id,
 				" and each enemy tile you destroy is worth 5 Morale."
 				" Capturing a tile gains you 3 Morale"
 				" and also lowers enemy Morale by 5."
-				"";
-				case Brief::OBJECTIVE: return ""
+				"");
+				case Brief::OBJECTIVE: return _(""
 				"Occupy or destroy your opponent's City to win."
 				" Each remaining City tile is worth 2 points"
 				" at the end of the game,"
 				" and each remaining Barracks, Industry or Airfield tile"
 				" is worth 1 point."
-				"";
-				case Brief::FIRST_STAR: return ""
+				"");
+				case Brief::FIRST_STAR: return _(""
 				"Get 2 points."
-				"";
-				case Brief::SECOND_STAR: return ""
+				"");
+				case Brief::SECOND_STAR: return _(""
 				"Get 5 points."
-				"";
-				case Brief::THIRD_STAR: return ""
+				"");
+				case Brief::THIRD_STAR: return _(""
 				"Get 8 points."
-				"";
-				case Brief::SENDOFF: return ""
+				"");
+				case Brief::SENDOFF: return _(""
 				"Good luck!"
-				"";
+				"");
 			}
 		}
 		break;

@@ -24,39 +24,37 @@
 #pragma once
 #include "header.hpp"
 
+class Settings;
 
-enum class Player : uint8_t
+
+class Language
 {
-	// No player.
-	NONE = 0,
-	// Player colors.
-	RED,
-	BLUE,
-	YELLOW,
-	TEAL,
-	BLACK,
-	PINK,
-	INDIGO,
-	PURPLE,
-	// Non-player vision types used by the Automaton.
-	BLIND,
-	OBSERVER,
-	// Non-player vision type used by the Board/Level to keep track of its
-	// owner's vision.
-	SELF,
+public:
+	class ScopedOverride
+	{
+	public:
+		ScopedOverride(const std::string& tag);
+		ScopedOverride(const ScopedOverride&) = delete;
+		ScopedOverride(ScopedOverride&&) = delete;
+		ScopedOverride& operator=(const ScopedOverride&) = delete;
+		ScopedOverride& operator=(ScopedOverride&&) = delete;
+		~ScopedOverride();
+
+	private:
+		std::string _oldenv;
+		bool _oldenvset;
+	};
+
+	static void use(const Settings& settings);
+
+	static bool isCurrentlyEnglish();
+
+	static std::vector<std::string> supportedTags();
+	static std::vector<std::string> experimentalTags();
+
+	static std::string getNameInOwnLanguage(const std::string& tag);
+	static std::string getNameInActiveLanguage(const std::string& tag);
+
+private:
+	static void bind();
 };
-
-constexpr size_t PLAYER_MAX = 8;
-constexpr size_t PLAYER_SIZE = ((size_t) Player::SELF) + 1;
-
-constexpr bool isPlayer(const Player& player)
-{
-	return (player != Player::NONE && ((size_t) player) <= PLAYER_MAX);
-}
-
-std::vector<Player> getPlayers(size_t n);
-Player parsePlayer(const std::string& str);
-const char* stringify(const Player& player);
-const char* colorPlayerName(const Player& player);
-
-std::ostream& operator<<(std::ostream& os, const Player& player);

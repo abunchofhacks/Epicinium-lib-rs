@@ -47,11 +47,16 @@ public:
 		MORALE,
 	};
 
+	static constexpr size_t ID_SIZE = ((size_t) Id::MORALE) + 1;
+
 	Challenge(Id id) :
 		_id(id)
 	{}
 
-	static Id current();
+	static Id current()
+	{
+		return MORALE;
+	}
 
 protected:
 	const Id _id;

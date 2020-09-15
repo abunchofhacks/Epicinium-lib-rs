@@ -1,6 +1,7 @@
 #include "clock.cpp"
 #include "constructordebugger.cpp"
 #include "coredump.cpp"
+#include "language.cpp"
 #include "locator.cpp"
 #include "loginstaller.cpp"
 #include "point.cpp"

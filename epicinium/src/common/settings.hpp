@@ -62,6 +62,7 @@ private:
 	std::vector<Setting<bool>*> _boollist;
 	std::vector<Setting<ScreenMode>*> _screenmodelist;
 	std::vector<Setting<SelectorMode>*> _selectormodelist;
+	std::vector<Setting<ArtPanMode>*> _artpanmodelist;
 	std::vector<Setting<PatchMode>*> _patchmodelist;
 	std::vector<Setting<int>*> _intlist;
 	std::vector<Setting<float>*> _floatlist;
@@ -70,6 +71,7 @@ private:
 	friend Setting<bool>;
 	friend Setting<ScreenMode>;
 	friend Setting<SelectorMode>;
+	friend Setting<ArtPanMode>;
 	friend Setting<PatchMode>;
 	friend Setting<int>;
 	friend Setting<float>;
@@ -78,6 +80,7 @@ private:
 	size_t push(Setting<bool>*);
 	size_t push(Setting<ScreenMode>*);
 	size_t push(Setting<SelectorMode>*);
+	size_t push(Setting<ArtPanMode>*);
 	size_t push(Setting<PatchMode>*);
 	size_t push(Setting<int>*);
 	size_t push(Setting<float>*);
@@ -86,6 +89,7 @@ private:
 	Setting<bool>& get(size_t index, bool dummy);
 	Setting<ScreenMode>& get(size_t index, ScreenMode dummy);
 	Setting<SelectorMode>& get(size_t index, SelectorMode dummy);
+	Setting<ArtPanMode>& get(size_t index, ArtPanMode dummy);
 	Setting<PatchMode>& get(size_t index, PatchMode dummy);
 	Setting<int>& get(size_t index, int dummy);
 	Setting<float>& get(size_t index, float dummy);
@@ -114,6 +118,7 @@ public:
 	Setting<int> scale;
 	Setting<int> framerate;
 	Setting<bool> finishRendering;
+	Setting<bool> steam;
 	Setting<bool> discord;
 	Setting<bool> allowDiscordLogin;
 	Setting<bool> useApi;
@@ -121,6 +126,7 @@ public:
 	Setting<int> port;
 	Setting<PatchMode> patchmode;
 	Setting<SelectorMode> selectormode;
+	Setting<ArtPanMode> artpanmode;
 	Setting<std::string> stomtToken;
 	Setting<std::string> memento;
 	Setting<bool> cameraScrollingWasd;
@@ -146,6 +152,18 @@ public:
 	Setting<bool> hideIdleAnimations;
 	Setting<bool> hideLayouts;
 	Setting<bool> showViewport;
+	Setting<std::string> language;
+	Setting<std::string> fontFilename;
+	Setting<int> fontSize;
+	Setting<int> fontSizeTextInput;
+	Setting<int> fontSizeMenuHeader;
+	Setting<int> fontSizeMenuButton;
+	Setting<int> fontSizePlayButton;
+	Setting<int> fontSizeReadyButton;
+	Setting<int> fontSizeWallet;
+	Setting<int> fontSizeOrderNumeral;
+	Setting<int> fontSizeTutorial;
+	Setting<int> fontSizeHeadline;
 
 private:
 	Setting<std::string> settings;
@@ -170,4 +188,15 @@ public:
 
 	bool askedForHelp() const { return _askedForHelp; }
 	void help() const;
+
+	int getFontSize() const;
+	int getFontSizeTextInput() const;
+	int getFontSizeMenuHeader() const;
+	int getFontSizeMenuButton() const;
+	int getFontSizePlayButton() const;
+	int getFontSizeReadyButton() const;
+	int getFontSizeWallet() const;
+	int getFontSizeOrderNumeral() const;
+	int getFontSizeTutorial() const;
+	int getFontSizeHeadline() const;
 };

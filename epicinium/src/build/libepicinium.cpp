@@ -36,6 +36,7 @@
 #include "library.hpp"
 #include "recording.hpp"
 #include "loginstaller.hpp"
+#include "language.hpp"
 
 
 struct Buffer
@@ -121,6 +122,7 @@ extern "C"
 	const char* epicinium_challenge_display_name(uint16_t id);
 	const char* epicinium_challenge_panel_picture_name(uint16_t id);
 	const char* epicinium_challenge_discord_image_key(uint16_t id);
+	const char* epicinium_challenge_steam_short_key(uint16_t id);
 	size_t epicinium_challenge_briefing_size(uint16_t id);
 	const char* epicinium_challenge_briefing_key(uint16_t id, size_t i);
 	const char* epicinium_challenge_briefing_value(uint16_t id, size_t i);
@@ -538,6 +540,10 @@ extern "C"
 	const char* epicinium_challenge_display_name(uint16_t id_as_u16)
 	{
 		Challenge::Id id = (Challenge::Id) id_as_u16;
+
+		// The server needs to send the display name in English,
+		// each client will retranslate the display name on its own.
+		Language::ScopedOverride override("en_US");
 		return AIChallenge::getDisplayName(id);
 	}
 	const char* epicinium_challenge_panel_picture_name(uint16_t id_as_u16)
@@ -549,6 +555,11 @@ extern "C"
 	{
 		Challenge::Id id = (Challenge::Id) id_as_u16;
 		return AIChallenge::getDiscordImageKey(id);
+	}
+	const char* epicinium_challenge_steam_short_key(uint16_t id_as_u16)
+	{
+		Challenge::Id id = (Challenge::Id) id_as_u16;
+		return AIChallenge::getSteamShortKey(id);
 	}
 	size_t epicinium_challenge_briefing_size(uint16_t /**/)
 	{
@@ -563,6 +574,10 @@ extern "C"
 	{
 		Challenge::Id id = (Challenge::Id) id_as_u16;
 		AIChallenge::Brief brief = (AIChallenge::Brief) i;
+
+		// The server needs to send the display name in English,
+		// each client will retranslate the display name on its own.
+		Language::ScopedOverride override("en_US");
 		return AIChallenge::getBrief(id, brief);
 	}
 

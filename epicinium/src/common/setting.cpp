@@ -49,6 +49,17 @@ static const char* stringify(const SelectorMode& mode)
 	return "";
 }
 
+static const char* stringify(const ArtPanMode& mode)
+{
+	switch (mode)
+	{
+		case ArtPanMode::NONE:      return "none";
+		case ArtPanMode::AUTO:      return "auto";
+		case ArtPanMode::CURSOR:    return "cursor";
+	}
+	return "";
+}
+
 static const char* stringify(const PatchMode& mode)
 {
 	switch (mode)
@@ -57,6 +68,7 @@ static const char* stringify(const PatchMode& mode)
 		case PatchMode::SERVER:       return "server";
 		case PatchMode::ITCHIO:       return "itchio";
 		case PatchMode::GAMEJOLT:     return "gamejolt";
+		case PatchMode::STEAM:        return "steam";
 	}
 	return "";
 }
@@ -378,6 +390,48 @@ void Setting<SelectorMode>::store(Json::Value& root) const
 }
 
 template <>
+bool Setting<ArtPanMode>::parse(const Json::Value& root, const char* name)
+{
+	auto& x = root[name];
+	if (x.isString())
+	{
+		_defined = true;
+		std::string str = x.asString();
+		if      (str == "none")                _value = ArtPanMode::NONE;
+		else if (str == "auto")                _value = ArtPanMode::AUTO;
+		else if (str == "cursor")              _value = ArtPanMode::CURSOR;
+		else
+		{
+			_defined = false;
+			std::cerr << "Unknown artpanmode '" << str << "'" << std::endl;
+			return false;
+		}
+		return true;
+	}
+	else if (!x.isNull())
+	{
+		std::cerr << "Invalid value for '" << name << "'" << std::endl;
+		return false;
+	}
+	else return false;
+}
+
+template <>
+void Setting<ArtPanMode>::store(Json::Value& root) const
+{
+	if (_name == nullptr) return;
+
+	if (_defined)
+	{
+		root[_name] = stringify(_value);
+	}
+	else
+	{
+		root.removeMember(_name);
+	}
+}
+
+template <>
 bool Setting<PatchMode>::parse(const Json::Value& root, const char* name)
 {
 	auto& x = root[name];
@@ -389,6 +443,7 @@ bool Setting<PatchMode>::parse(const Json::Value& root, const char* name)
 		else if (str == "server")              _value = PatchMode::SERVER;
 		else if (str == "itchio")              _value = PatchMode::ITCHIO;
 		else if (str == "gamejolt")            _value = PatchMode::GAMEJOLT;
+		else if (str == "steam")               _value = PatchMode::STEAM;
 		else
 		{
 			_defined = false;
@@ -438,6 +493,7 @@ void Setting<T>::store(Json::Value& root) const
 template class Setting<bool>;
 template class Setting<ScreenMode>;
 template class Setting<SelectorMode>;
+template class Setting<ArtPanMode>;
 template class Setting<PatchMode>;
 template class Setting<int>;
 template class Setting<float>;

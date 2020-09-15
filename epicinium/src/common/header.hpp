@@ -100,6 +100,10 @@ struct stringref;
 #define INCLUDE_IMGUI_ENABLED true
 #endif
 
+#ifndef INTL_ENABLED
+#define INTL_ENABLED true
+#endif
+
 #ifndef LOG_REPLACE_WITH_CALLBACK_ENABLED
 #define LOG_REPLACE_WITH_CALLBACK_ENABLED false
 #endif
@@ -118,6 +122,10 @@ struct stringref;
 
 #ifndef VALGRIND_INTEGRATION_ENABLED
 #define VALGRIND_INTEGRATION_ENABLED false
+#endif
+
+#ifndef STEAM_ENABLED
+#define STEAM_ENABLED false
 #endif
 
 #ifndef DISCORD_GUEST_ENABLED
