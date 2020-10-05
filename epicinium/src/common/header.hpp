@@ -34,6 +34,10 @@
 #include <iosfwd>
 #include <cassert>
 #include <array>
+#include <cctype>
+#include <tuple>
+
+#include <cctype>
 
 /* If we are running dev, we want as many crashes as possible. */
 // Usage: "DEBUG_ASSERT(xyz);"
@@ -108,12 +112,12 @@ struct stringref;
 #define LOG_REPLACE_WITH_CALLBACK_ENABLED false
 #endif
 
-#ifndef DICTATOR_ENABLED
-#ifdef DEVELOPMENT
-#define DICTATOR_ENABLED true
-#else
-#define DICTATOR_ENABLED false
+#ifndef FEMTOZIP_ENABLED
+#define FEMTOZIP_ENABLED false
 #endif
+
+#ifndef DICTATOR_ENABLED
+#define DICTATOR_ENABLED false
 #endif
 
 #ifndef LIBLOADER_ENABLED
@@ -126,6 +130,14 @@ struct stringref;
 
 #ifndef STEAM_ENABLED
 #define STEAM_ENABLED false
+#endif
+
+#ifndef SELF_PATCH_ENABLED
+#if STEAM_ENABLED
+#define SELF_PATCH_ENABLED false
+#else
+#define SELF_PATCH_ENABLED true
+#endif
 #endif
 
 #ifndef DISCORD_GUEST_ENABLED

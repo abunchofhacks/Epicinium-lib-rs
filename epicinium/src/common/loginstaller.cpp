@@ -35,6 +35,7 @@
 
 #include "settings.hpp"
 #include "version.hpp"
+#include "system.hpp"
 
 
 #if LOG_REPLACE_WITH_CALLBACK_ENABLED
@@ -62,7 +63,6 @@ std::string LogInstaller::_logsfolder = "logs/";
 
 void LogInstaller::setRoot(const std::string& root)
 {
-	// TODO just use settings?
 	if (root.empty())
 	{
 		_logsfolder = "logs/";
@@ -135,6 +135,8 @@ void LogInstaller::install()
 	plog::init<0>(std::max(verbosity, plog::verbose),
 		&_installed_callback_appender);
 #else
+	System::touchDirectory(_logsfolder);
+
 	// Verbose log that includes everything.
 	std::string verbosefilename = _logsfolder + _name + ".verbose.log";
 	// Default info log.

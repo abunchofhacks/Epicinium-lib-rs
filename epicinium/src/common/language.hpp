@@ -40,9 +40,11 @@ public:
 		ScopedOverride& operator=(ScopedOverride&&) = delete;
 		~ScopedOverride();
 
+#if INTL_ENABLED
 	private:
-		std::string _oldenv;
+		std::string _oldvalue;
 		bool _oldenvset;
+#endif
 	};
 
 	static void use(const Settings& settings);
@@ -51,6 +53,7 @@ public:
 
 	static std::vector<std::string> supportedTags();
 	static std::vector<std::string> experimentalTags();
+	static std::vector<std::string> incompleteTags();
 
 	static std::string getNameInOwnLanguage(const std::string& tag);
 	static std::string getNameInActiveLanguage(const std::string& tag);

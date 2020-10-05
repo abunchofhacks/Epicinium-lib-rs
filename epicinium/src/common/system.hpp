@@ -49,5 +49,9 @@ namespace System
 	std::string readLink(const std::string& filename);
 	void makeLink(const std::string& filename, const char* target);
 
-	bool hasStorageIssues();
+	bool hasStorageIssuesForSelfPatch();
+
+	std::string getPersistentConfigRoot();
+	std::string getPersistentDataRoot();
+	std::string getPersistentCacheRoot();
 }

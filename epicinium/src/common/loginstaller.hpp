@@ -61,4 +61,5 @@ private:
 
 public:
 	static void setRoot(const std::string& root);
+	static std::string getLogsFolderWithSlash() { return _logsfolder; }
 };

@@ -111,7 +111,9 @@ bool Library::loadIndex(const std::string& filename)
 			continue;
 		}
 
-		if ((version.major == myversion.major && version.minor <= myversion.minor)
+		if (version.major < myversion.major
+			|| (version.major == myversion.major
+				&& version.minor <= myversion.minor)
 			|| myversion.isDevelopment())
 		{
 			_available.push_back(version);

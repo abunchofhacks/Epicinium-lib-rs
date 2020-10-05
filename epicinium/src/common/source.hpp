@@ -45,13 +45,16 @@
 #include "libs/plog/Log.h"
 
 #if INTL_ENABLED
-#include <libintl.h>
+#include "libs/intl/libintl.h"
 #define _(STRING) gettext(STRING)
-// This is a separate macro to prevent xgettext from detecting it.
-#define GETTEXT_FROM_SERVER(STRING) gettext(STRING)
 #else
 #define _(STRING) (STRING)
 #endif
+
+// This is a separate macro to prevent xgettext from detecting it,
+// and to make it more obvious that the translation only works if the actual
+// translation source is defined elsewhere in this codebase.
+#define GETTEXT_FROM_SERVER(STRING) _(STRING)
 
 /* If we are running dev, we want to be able to call profiling macros. */
 #if VALGRIND_INTEGRATION_ENABLED
@@ -190,12 +193,44 @@ constexpr const char* jsonify(bool value)
 	return value ? "true" : "false";
 }
 
+#ifdef PLATFORMDEBIAN
+#define x_snprintf snprintf
+#else
+#if defined(_MSC_VER) && _MSC_VER < 1900
+__inline int c99_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
+{
+    int count = -1;
+
+    if (size != 0)
+        count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
+    if (count == -1)
+        count = _vscprintf(format, ap);
+
+    return count;
+}
+__inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
+{
+    int count;
+    va_list ap;
+
+    va_start(ap, format);
+    count = c99_vsnprintf(outBuf, size, format, ap);
+    va_end(ap);
+
+    return count;
+}
+#define x_snprintf c99_snprintf
+#else
+#define x_snprintf snprintf
+#endif
+#endif
+
 /* Format like printf but returning a string. */
 template<typename... Args>
 inline std::string format(const char* format, Args... args)
 {
 	std::vector<char> buffer(1024);
-	int n = snprintf(buffer.data(), buffer.size(), format, args...);
+	int n = x_snprintf(buffer.data(), buffer.size(), format, args...);
 	DEBUG_ASSERT(n >= 0);
 	if (n < 0)
 	{
@@ -204,7 +239,7 @@ inline std::string format(const char* format, Args... args)
 	if (((size_t) n) >= buffer.size())
 	{
 		buffer.resize(n + 1);
-		n = snprintf(buffer.data(), buffer.size(), format, args...);
+		n = x_snprintf(buffer.data(), buffer.size(), format, args...);
 		DEBUG_ASSERT(n >= 0);
 		if (n < 0)
 		{

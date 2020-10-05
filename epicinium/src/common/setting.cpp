@@ -64,6 +64,7 @@ static const char* stringify(const PatchMode& mode)
 {
 	switch (mode)
 	{
+		case PatchMode::SERVER_BUT_DISABLED_DUE_TO_STORAGE_ISSUES:
 		case PatchMode::NONE:         return "none";
 		case PatchMode::SERVER:       return "server";
 		case PatchMode::ITCHIO:       return "itchio";
@@ -108,8 +109,13 @@ void Setting<T>::override(const T& value)
 }
 
 template <typename T>
-void Setting<T>::reset()
+void Setting<T>::clear()
 {
+	if (!_owner->saveable() && _owner->_fallback)
+	{
+		return _owner->_fallback->get(_index, /*type=*/_value).clear();
+	}
+
 	_defined = false;
 }
 
@@ -204,7 +210,18 @@ bool Setting<bool>::parse(const Json::Value& root, const char* name)
 		_defined = true;
 		if (x.asString() == "true") _value = 1;
 		else if (x.asString() == "false") _value = 0;
-		else _value = std::stoi(x.asString());
+		else
+		{
+			try
+			{
+				_value = std::stoi(x.asString());
+			}
+			catch (const std::logic_error& e)
+			{
+				std::cerr << "Invalid value for '" << name << "'" << std::endl;
+				return false;
+			}
+		}
 		return true;
 	}
 	else if (!x.isNull())
@@ -236,7 +253,18 @@ bool Setting<int>::parse(const Json::Value& root, const char* name)
 		_defined = true;
 		if (x.asString() == "true") _value = 1;
 		else if (x.asString() == "false") _value = 0;
-		else _value = std::stoi(x.asString());
+		else
+		{
+			try
+			{
+				_value = std::stoi(x.asString());
+			}
+			catch (const std::logic_error& e)
+			{
+				std::cerr << "Invalid value for '" << name << "'" << std::endl;
+				return false;
+			}
+		}
 		return true;
 	}
 	else if (!x.isNull())
@@ -274,7 +302,17 @@ bool Setting<float>::parse(const Json::Value& root, const char* name)
 		_defined = true;
 		if (x.asString() == "true") _value = 1;
 		else if (x.asString() == "false") _value = 0;
-		else _value = std::stof(x.asString());
+		{
+			try
+			{
+				_value = std::stof(x.asString());
+			}
+			catch (const std::logic_error& e)
+			{
+				std::cerr << "Invalid value for '" << name << "'" << std::endl;
+				return false;
+			}
+		}
 		return true;
 	}
 	else if (!x.isNull())

@@ -69,10 +69,12 @@ std::vector<Bot> AIChallenge::getBots()
 	std::vector<Bot> bots;
 	size_t n = AIChallenge::getNumBots(_id);
 	bots.reserve(n);
+	char slotname[3] = "%""A";
 	for (size_t i = 0; i < n; i++)
 	{
-		bots.emplace_back("-", AIChallenge::getBotName(_id),
+		bots.emplace_back(slotname, AIChallenge::getBotName(_id),
 			AIChallenge::getBotDifficulty(_id));
+		slotname[1] += 1;
 	}
 	return bots;
 }

@@ -33,24 +33,43 @@
 
 #if INTL_ENABLED
 /* ######################################################################### */
+
+inline const char* getEnvLanguage()
+{
+	return getenv("LANGUAGE");
+}
+
+inline void setEnvLanguage(const std::string& newvalue)
+{
+#ifdef PLATFORMUNIX
+	if (setenv("LANGUAGE", newvalue.c_str(), true) != 0)
+	{
+		LOGE << "Failed to set LANGUAGE to '" << newvalue << "':"
+			" " << errno << ": " << strerror(errno);
+	}
+#else
+	std::string newenv = "LANGUAGE=" + newvalue;
+	if (_putenv(newenv.c_str()) != 0)
+	{
+		LOGE << "Failed to put '" << newenv << "'";
+	}
+#endif
+}
+
 Language::ScopedOverride::ScopedOverride(const std::string& override)
 {
-	LOGV << "Current LANGUAGE: " << getenv("LANGUAGE");
+	LOGV << "Current LANGUAGE: " << getEnvLanguage();
 	std::stringstream strm;
 	strm << override;
-	if (getenv("LANGUAGE") != nullptr)
+	if (getEnvLanguage() != nullptr)
 	{
-		strm << ":" << getenv("LANGUAGE");
-		_oldenv = getenv("LANGUAGE");
+		strm << ":" << getEnvLanguage();
+		_oldvalue = getEnvLanguage();
 		_oldenvset = true;
 	}
 	std::string newenv = strm.str();
-	if (setenv("LANGUAGE", newenv.c_str(), true) != 0)
-	{
-		LOGE << "Failed to set LANGUAGE to '" << newenv << "':"
-			" " << errno << ": " << strerror(errno);
-	}
-	LOGV << "Current LANGUAGE: " << getenv("LANGUAGE");
+	setEnvLanguage(newenv);
+	LOGV << "Current LANGUAGE: " << getEnvLanguage();
 
 	bind();
 }
@@ -59,13 +78,9 @@ Language::ScopedOverride::~ScopedOverride()
 {
 	if (_oldenvset)
 	{
-		if (setenv("LANGUAGE", _oldenv.c_str(), true) != 0)
-		{
-			LOGE << "Failed to set LANGUAGE to '" << _oldenv << "':"
-				" " << errno << ": " << strerror(errno);
-		}
+		setEnvLanguage(_oldvalue);
 	}
-	LOGV << "Current LANGUAGE: " << getenv("LANGUAGE");
+	LOGV << "Current LANGUAGE: " << getEnvLanguage();
 
 	bind();
 }
@@ -83,21 +98,17 @@ void Language::use(const Settings& settings)
 	LOGI << "Current locale: " << setlocale(LC_ALL, NULL);
 
 	{
-		LOGV << "Current LANGUAGE: " << getenv("LANGUAGE");
+		LOGV << "Current LANGUAGE: " << getEnvLanguage();
 		std::stringstream strm;
 		strm << settings.language.value("en_US");
-		if (getenv("LANGUAGE") != nullptr)
+		if (getEnvLanguage() != nullptr)
 		{
-			strm << ":" << getenv("LANGUAGE");
+			strm << ":" << getEnvLanguage();
 		}
 		std::string language = strm.str();
-		if (setenv("LANGUAGE", language.c_str(), true) != 0)
-		{
-			LOGE << "Failed to set LANGUAGE to '" << language << "':"
-				" " << errno << ": " << strerror(errno);
-		}
+		setEnvLanguage(language);
 	}
-	LOGI << "Current LANGUAGE: " << getenv("LANGUAGE");
+	LOGI << "Current LANGUAGE: " << getEnvLanguage();
 
 	bind();
 }
@@ -105,7 +116,7 @@ void Language::use(const Settings& settings)
 void Language::bind()
 {
 	constexpr const char* TEXTDOMAIN = "epicinium";
-	constexpr const char* LOCALEDIR = "bin/loc";
+	constexpr const char* LOCALEDIR = "data/loc";
 	constexpr const char* CODESET = "UTF-8";
 	if (bindtextdomain(TEXTDOMAIN, LOCALEDIR) == nullptr)
 	{
@@ -126,9 +137,9 @@ void Language::bind()
 
 bool Language::isCurrentlyEnglish()
 {
-	if (getenv("LANGUAGE") != nullptr)
+	if (getEnvLanguage() != nullptr)
 	{
-		return (strncmp(getenv("LANGUAGE"), "en_", 3) == 0);
+		return (strncmp(getEnvLanguage(), "en_", 3) == 0);
 	}
 	return false;
 }
@@ -143,7 +154,19 @@ std::vector<std::string> Language::supportedTags()
 std::vector<std::string> Language::experimentalTags()
 {
 	return {
+	};
+}
+
+std::vector<std::string> Language::incompleteTags()
+{
+	return {
+		"cs_CZ",
+		"it_IT",
 		"nl_NL",
+		"pl_PL",
+		"pt_BR",
+		"ru_RU",
+		"uk_UA",
 	};
 }
 
@@ -159,14 +182,38 @@ std::string Language::getNameInActiveLanguage(const std::string& tag)
 	{
 		return _("English");
 	}
+	else if (tag == "cs_CZ")
+	{
+		return _("Czech");
+	}
+	else if (tag == "it_IT")
+	{
+		return _("Italian");
+	}
 	else if (tag == "nl_NL")
 	{
 		return _("Dutch");
 	}
+	else if (tag == "pl_PL")
+	{
+		return _("Polish");
+	}
+	else if (tag == "pt_BR")
+	{
+		return _("Portuguese (BR)");
+	}
+	else if (tag == "ru_RU")
+	{
+		return _("Russian");
+	}
+	else if (tag == "uk_UA")
+	{
+		return _("Ukrainian");
+	}
 	else
 	{
 		LOGW << "Missing language name for '" << tag << "'";
-		return "[" + tag + "]";
+		return tag;
 	}
 }
 /* ######################################################################### */

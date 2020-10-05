@@ -27,20 +27,57 @@
 #include "system.hpp"
 
 
+std::string Locator::_cacheroot = "";
+
+void Locator::setRoot(const std::string& root)
+{
+	if (root.empty())
+	{
+		_cacheroot = "";
+	}
+	else if (root.back() == '/')
+	{
+		_cacheroot = root;
+	}
+	else
+	{
+		_cacheroot = root + "/";
+	}
+}
+
+std::string Locator::getRelativeFilename(const std::string& filename)
+{
+	if (filename.size() > _cacheroot.size()
+		&& filename.compare(0, _cacheroot.size(), _cacheroot) == 0)
+	{
+		// Cut off the cacheroot.
+		return filename.substr(_cacheroot.size());
+	}
+	else
+	{
+		return filename;
+	}
+}
+
 std::string Locator::picture(const std::string& picturename)
 {
 	std::string filename = pictureFilename(picturename);
+	// Use the pre-installed version as a fallback, if it exists, but
+	// we'll try to download a new version later (see Picture and EpiCDN).
+	std::string fallbackfilename = getRelativeFilename(filename);
 	if (System::isFile(filename)) return filename;
+	else if (System::isFile(fallbackfilename)) return fallbackfilename;
 	else return "pictures/unknown.png";
 }
 
 std::string Locator::pictureFilename(const std::string& picturename)
 {
-	return "pictures/" + picturename + ".png";
+	return _cacheroot + "pictures/" + picturename + ".png";
 }
 
-std::string Locator::pictureName(const std::string& filename)
+std::string Locator::pictureName(const std::string& fullfilename)
 {
+	std::string filename = getRelativeFilename(fullfilename);
 	size_t slashpos = filename.find_first_of('/');
 	size_t dotpos = filename.find_last_of('.');
 	if (filename.substr(0, slashpos) == "pictures"
@@ -53,11 +90,12 @@ std::string Locator::pictureName(const std::string& filename)
 
 std::string Locator::rulesetFilename(const std::string& rulesetname)
 {
-	return "rulesets/" + rulesetname + ".json";
+	return _cacheroot + "rulesets/" + rulesetname + ".json";
 }
 
-std::string Locator::rulesetName(const std::string& filename)
+std::string Locator::rulesetName(const std::string& fullfilename)
 {
+	std::string filename = getRelativeFilename(fullfilename);
 	size_t slashpos = filename.find_first_of('/');
 	size_t dotpos = filename.find_last_of('.');
 	if (filename.substr(0, slashpos) == "rulesets"
@@ -70,11 +108,12 @@ std::string Locator::rulesetName(const std::string& filename)
 
 std::string Locator::fzmodelFilename(const std::string& fzmodelname)
 {
-	return "sessions/" + fzmodelname + ".fzm";
+	return _cacheroot + "sessions/" + fzmodelname + ".fzm";
 }
 
-std::string Locator::fzmodelName(const std::string& filename)
+std::string Locator::fzmodelName(const std::string& fullfilename)
 {
+	std::string filename = getRelativeFilename(fullfilename);
 	size_t slashpos = filename.find_first_of('/');
 	size_t dotpos = filename.find_last_of('.');
 	if (filename.substr(0, slashpos) == "sessions"

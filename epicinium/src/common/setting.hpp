@@ -28,7 +28,15 @@
 enum class ScreenMode : uint8_t { WINDOWED, BORDERLESS, FULLSCREEN, DESKTOP };
 enum class SelectorMode : uint8_t { CONTEXT, FIGURE };
 enum class ArtPanMode : uint8_t { NONE, AUTO, CURSOR };
-enum class PatchMode : uint8_t { NONE, SERVER, ITCHIO, GAMEJOLT, STEAM };
+enum class PatchMode : uint8_t
+{
+	NONE,
+	SERVER,
+	SERVER_BUT_DISABLED_DUE_TO_STORAGE_ISSUES,
+	ITCHIO,
+	GAMEJOLT,
+	STEAM
+};
 
 class Settings;
 
@@ -55,7 +63,7 @@ public:
 
 	Setting& operator=(const T& value);
 	void override(const T& value);
-	void reset();
+	void clear();
 	bool defined() const;
 	const Setting& definition() const;
 	const T& value() const;

@@ -221,9 +221,9 @@ void AILibrary::setup(const char* name, int argc, const char* const argv[])
 {
 	Settings settings(argc, argv);
 
-	if (settings.dataFolder.defined())
+	if (settings.dataRoot.defined())
 	{
-		LogInstaller::setRoot(settings.dataFolder.value());
+		LogInstaller::setRoot(settings.dataRoot.value());
 	}
 
 	std::string logname = name;

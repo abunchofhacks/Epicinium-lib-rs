@@ -107,7 +107,9 @@ public:
 	Setting<std::string> loglevel;
 	Setting<int> logrollback;
 	Setting<std::string> perflog;
-	Setting<std::string> dataFolder;
+	Setting<std::string> configRoot;
+	Setting<std::string> dataRoot;
+	Setting<std::string> cacheRoot;
 	Setting<int> seed;
 	Setting<int> display;
 	Setting<ScreenMode> screenmode;
@@ -153,6 +155,7 @@ public:
 	Setting<bool> hideLayouts;
 	Setting<bool> showViewport;
 	Setting<std::string> language;
+	Setting<std::string> palette;
 	Setting<std::string> fontFilename;
 	Setting<int> fontSize;
 	Setting<int> fontSizeTextInput;
@@ -161,7 +164,6 @@ public:
 	Setting<int> fontSizePlayButton;
 	Setting<int> fontSizeReadyButton;
 	Setting<int> fontSizeWallet;
-	Setting<int> fontSizeOrderNumeral;
 	Setting<int> fontSizeTutorial;
 	Setting<int> fontSizeHeadline;
 
@@ -189,6 +191,7 @@ public:
 	bool askedForHelp() const { return _askedForHelp; }
 	void help() const;
 
+	int getScaleBasedFontSize() const;
 	int getFontSize() const;
 	int getFontSizeTextInput() const;
 	int getFontSizeMenuHeader() const;
@@ -196,7 +199,20 @@ public:
 	int getFontSizePlayButton() const;
 	int getFontSizeReadyButton() const;
 	int getFontSizeWallet() const;
-	int getFontSizeOrderNumeral() const;
 	int getFontSizeTutorial() const;
 	int getFontSizeHeadline() const;
+
+private:
+	static std::string _configroot;
+
+public:
+	static void setRoot(const std::string& root);
+
+	static std::string getPathFromFilename(const std::string& filename)
+	{
+		return _configroot + filename;
+	}
+
+	static void determineCompatibleRoot(const std::string& filename,
+		int argc, const char* const argv[]);
 };

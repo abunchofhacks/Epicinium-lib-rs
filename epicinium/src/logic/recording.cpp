@@ -30,6 +30,7 @@
 #include "keycode.hpp"
 #include "player.hpp"
 #include "library.hpp"
+#include "system.hpp"
 
 
 static std::mutex _recordingsmutex;
@@ -80,6 +81,8 @@ void Recording::start()
 	uint16_t key = rand();
 	_name = keycode(key, counter++);
 	_filename = Recording::filename(_name);
+
+	System::touchFile(_filename);
 }
 
 void Recording::start(const std::string& name)
@@ -87,6 +90,8 @@ void Recording::start(const std::string& name)
 	_name = name;
 	_filename = Recording::filename(name);
 	_listed = false;
+
+	System::touchFile(_filename);
 }
 
 void Recording::end()
@@ -173,6 +178,9 @@ std::vector<Recording> Recording::list(int count)
 	if (count <= 0) return {};
 	size_t maxcount = count;
 	std::vector<Recording> results;
+
+	System::touchDirectory(_recordingsfolder);
+
 
 	std::lock_guard<std::mutex> lock(_recordingsmutex);
 

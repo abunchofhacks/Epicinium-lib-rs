@@ -101,6 +101,11 @@ public:
 	}
 
 	bool tryBecomeParsed(const std::string& str);
+
+	constexpr uint32_t asUint32() const
+	{
+		return (major << 24) | (minor << 16) | (patch << 8) | rcand;
+	}
 };
 
 std::ostream& operator<<(std::ostream& os, const Version& version);

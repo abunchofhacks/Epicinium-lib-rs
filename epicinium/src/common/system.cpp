@@ -26,7 +26,7 @@
 
 
 #ifdef PLATFORMUNIX
-/* ######################################### UNIX ######################################### */
+/* ################################## UNIX ################################## */
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -198,16 +198,24 @@ void System::makeLink(const std::string& filename, const char* target)
 	}
 }
 
-/* ######################################### UNIX ######################################### */
+/* ################################## UNIX ################################## */
 #else
-/* ######################################## WINDOWS ####################################### */
+/* ################################# WINDOWS ################################ */
 
 #include <sys/stat.h>
 #include <time.h>
 #include <windows.h>
+#include <direct.h>
 
 #include "clock.hpp"
 #include "keycode.hpp"
+
+#if !defined(S_ISREG) && defined(S_IFMT) && defined(S_IFREG)
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
+#if !defined(S_ISDIR) && defined(S_IFMT) && defined(S_IFDIR)
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#endif
 
 
 void System::touchDirectory(const std::string& dirname)
@@ -219,7 +227,7 @@ void System::touchDirectory(const std::string& dirname)
 	struct stat buffer;
 	if (::stat(dirname.c_str(), &buffer) == 0 && S_ISDIR(buffer.st_mode)) return;
 
-	::mkdir(dirname.c_str());
+	::_mkdir(dirname.c_str());
 }
 
 void System::touchFile(const std::string& filename)
@@ -310,6 +318,7 @@ void System::unlinkFile(const std::string& filename)
 {
 	if (!isFile(filename)) return;
 
+#if SELF_PATCH_ENABLED
 	auto timestampMs = EpochClock::milliseconds();
 	uint16_t key = rand() % (1 << 16);
 	std::string hash = ::keycode(key, timestampMs);
@@ -329,6 +338,9 @@ void System::unlinkFile(const std::string& filename)
 
 	std::ofstream oldlist("downloads\\old.list", std::ofstream::app);
 	oldlist << dest << std::endl;
+#else
+	LOGE << "Unimplemented";
+#endif
 }
 
 void System::moveFile(const std::string& filename, const std::string& dest)
@@ -377,14 +389,13 @@ void System::makeLink(const std::string&, const char*)
 	DEBUG_ASSERT(false);
 }
 
-/* ######################################## WINDOWS ####################################### */
+/* ################################# WINDOWS ################################ */
 #endif
 
 
 
-static 	bool doSimpleStorageTest()
+static bool doSimpleStorageTest(const std::string& filename)
 {
-	std::string filename = "logs/storage.log";
 	std::string teststring = "This file was automatically generated.";
 	{
 		System::touchFile(filename);
@@ -405,9 +416,179 @@ static 	bool doSimpleStorageTest()
 	return false;
 }
 
-bool System::hasStorageIssues()
+bool System::hasStorageIssuesForSelfPatch()
 {
 	// Do the simple storage test the first time this function is called.
-	static const bool has = doSimpleStorageTest();
+	static const bool has = doSimpleStorageTest("downloads/storage.log");
 	return has;
 }
+
+
+
+inline const char* getVariantName()
+{
+#ifdef DEVELOPMENT
+#ifdef CANDIDATE
+	return "epicinium-rc";
+#else
+	return "epicinium-dev";
+#endif
+#else
+	return "epicinium";
+#endif
+}
+
+#ifdef PLATFORMDEBIAN
+/* ################################# DEBIAN ################################# */
+inline std::string getPersistentPath(const char* envname, const char* infix)
+{
+	std::string path = "";
+	if (getenv(envname) != nullptr)
+	{
+		path = getenv(envname);
+	}
+
+	if (path == "/")
+	{
+		// LogInstaller probably hasn't been called yet.
+		std::cerr << "Ignoring " << envname << "=" << path << std::endl;
+		path = "";
+	}
+
+	if (path.empty())
+	{
+		if (getenv("HOME") == nullptr)
+		{
+			// LogInstaller probably hasn't been called yet.
+			std::cerr << "No HOME dir defined." << std::endl;
+			return "";
+		}
+
+		path = getenv("HOME");
+		if (path.empty() || path == "/")
+		{
+			// LogInstaller probably hasn't been called yet.
+			std::cerr << "Invalid HOME dir: " << path << std::endl;
+			return "";
+		}
+
+		if (path.back() != '/')
+		{
+			path += "/";
+		}
+		path = path + infix;
+	}
+
+	if (path.back() != '/')
+	{
+		path += "/";
+	}
+	path += getVariantName();
+	path += "/";
+
+	return path;
+}
+
+std::string System::getPersistentConfigRoot()
+{
+	return getPersistentPath("XDG_CONFIG_HOME", ".config/");
+}
+
+std::string System::getPersistentDataRoot()
+{
+	return getPersistentPath("XDG_DATA_HOME", ".local/share/");
+}
+
+std::string System::getPersistentCacheRoot()
+{
+	return getPersistentPath("XDG_CACHE_HOME", ".cache/");
+}
+/* ################################# DEBIAN ################################# */
+#endif
+#ifdef PLATFORMOSX
+/* ################################## OSX ################################### */
+#include <limits.h>
+#include <NSSystemDirectories.h>
+
+inline std::string getPersistentPath(NSSearchPathDirectory dir)
+{
+	auto state = NSStartSearchPathEnumeration(dir, NSUserDomainMask);
+	if (state == 0)
+	{
+		LOGE << "Failed to get persistent path";
+		return "";
+	}
+	char buffer[PATH_MAX];
+	NSGetNextSearchPathEnumeration(state, buffer);
+	std::string path = buffer;
+	if (path.empty())
+	{
+		LOGE << "Failed to get persistent path, returned empty string";
+		return "";
+	}
+	else if (path.back() != '/')
+	{
+		path += "/";
+	}
+	path += std::string("coop.abunchofhacks.");
+	path += getVariantName();
+	return path;
+}
+
+std::string System::getPersistentConfigRoot()
+{
+	return getPersistentPath(NSApplicationSupportDirectory);
+}
+
+std::string System::getPersistentDataRoot()
+{
+	return getPersistentPath(NSApplicationSupportDirectory);
+}
+
+std::string System::getPersistentCacheRoot()
+{
+	return getPersistentPath(NSCachesDirectory);
+}
+/* ################################## OSX ################################### */
+#endif
+#ifdef PLATFORMWINDOWS
+/* ################################# WINDOWS ################################ */
+#include <shlobj_core.h>
+
+inline std::string getPersistentPath()
+{
+	const char** buffer;
+	HRESULT result = SHGetFolderPathAndSubDirA(nullptr,
+		CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE | CSIDL_FLAG_DONT_UNEXPAND,
+		nullptr, SHGFP_TYPE_CURRENT, getVariantName(), buffer);
+	if (result != S_OK)
+	{
+		LOGE << "Failed to get persistent root, error code: "
+			<< std::hex << std::showbase << result << std::dec;
+		return "";
+	}
+
+	std::string path = *buffer;
+	if (!path.empty() && path.back() != '/' && path.back() != '\\')
+	{
+		path += "/";
+	}
+	return path;
+}
+
+std::string System::getPersistentConfigRoot()
+{
+	return getPersistentPath();
+}
+
+std::string System::getPersistentDataRoot()
+{
+	return getPersistentPath();
+}
+
+std::string System::getPersistentCacheRoot()
+{
+	return getPersistentPath();
+}
+/* ################################# WINDOWS ################################ */
+#endif

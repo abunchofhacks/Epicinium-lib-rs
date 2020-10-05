@@ -27,6 +27,24 @@
 #include "system.hpp"
 
 
+std::string Settings::_configroot = "";
+
+void Settings::setRoot(const std::string& root)
+{
+	if (root.empty())
+	{
+		_configroot = "";
+	}
+	else if (root.back() == '/')
+	{
+		_configroot = root;
+	}
+	else
+	{
+		_configroot = root + "/";
+	}
+}
+
 void Settings::help() const
 {
 	std::cout << "Settings:" << std::endl
@@ -40,7 +58,9 @@ Settings::Settings(std::unique_ptr<Settings> fallback) :
 	loglevel(this, "loglevel"),
 	logrollback(this, "logrollback"),
 	perflog(this, "perflog"),
-	dataFolder(this, "data-folder"),
+	configRoot(this, "config-root"),
+	dataRoot(this, "data-root", "data-folder"),
+	cacheRoot(this, "cache-root"),
 	seed(this, "seed"),
 	display(this, "display"),
 	screenmode(this, "screenmode"),
@@ -86,6 +106,7 @@ Settings::Settings(std::unique_ptr<Settings> fallback) :
 	hideLayouts(this, "hide-layouts"),
 	showViewport(this, "show-viewport"),
 	language(this, "language"),
+	palette(this, "palette"),
 	fontFilename(this, "font-filename"),
 	fontSize(this, "font-size"),
 	fontSizeTextInput(this, "font-size-text-input"),
@@ -94,7 +115,6 @@ Settings::Settings(std::unique_ptr<Settings> fallback) :
 	fontSizePlayButton(this, "font-size-play-button"),
 	fontSizeReadyButton(this, "font-size-ready-button"),
 	fontSizeWallet(this, "font-size-wallet"),
-	fontSizeOrderNumeral(this, "font-size-order-numeral"),
 	fontSizeTutorial(this, "font-size-tutorial"),
 	fontSizeHeadline(this, "font-size-headline"),
 	settings(this, "settings", "defaults")
@@ -125,6 +145,18 @@ Settings::Settings() :
 	masterVolume = 1.0f;
 	gameplayVolume = 1.0f;
 	musicVolume = 1.0f;
+
+#ifdef DEVELOPMENT
+#ifdef CANDIDATE
+	dataRoot = System::getPersistentDataRoot();
+	cacheRoot = System::getPersistentCacheRoot();
+#else
+	// Use the working directory.
+#endif
+#else
+	dataRoot = System::getPersistentDataRoot();
+	cacheRoot = System::getPersistentCacheRoot();
+#endif
 }
 
 Settings::Settings(const std::string& fname,
@@ -420,7 +452,11 @@ PatchMode Settings::detectPatchMode()
 	}
 	else
 	{
+#if SELF_PATCH_ENABLED
 		return PatchMode::SERVER;
+#else
+		return PatchMode::NONE;
+#endif
 	}
 #endif
 }
@@ -550,9 +586,14 @@ Json::Value Settings::flattenIntoJson()
 	return root;
 }
 
+int Settings::getScaleBasedFontSize() const
+{
+	return 8 * scale.value(2);
+}
+
 int Settings::getFontSize() const
 {
-	return fontSize.value(8 * scale.value(2));
+	return fontSize.value(getScaleBasedFontSize());
 }
 
 int Settings::getFontSizeTextInput() const
@@ -585,11 +626,6 @@ int Settings::getFontSizeWallet() const
 	return fontSizeWallet.value(2 * getFontSize());
 }
 
-int Settings::getFontSizeOrderNumeral() const
-{
-	return fontSizeOrderNumeral.value(2 * getFontSize());
-}
-
 int Settings::getFontSizeTutorial() const
 {
 	return fontSizeTutorial.value(getFontSize());
@@ -598,4 +634,52 @@ int Settings::getFontSizeTutorial() const
 int Settings::getFontSizeHeadline() const
 {
 	return fontSizeHeadline.value(3 * getFontSize());
+}
+
+void Settings::determineCompatibleRoot(const std::string& settingsfilename,
+	int argc, const char* const argv[])
+{
+	try
+	{
+		Settings argsettings(argc, argv);
+		if (argsettings.configRoot.defined())
+		{
+			Settings::setRoot(argsettings.configRoot.value());
+			return;
+		}
+	}
+	catch (...)
+	{
+		// Ignored.
+	}
+
+#ifdef DEVELOPMENT
+#ifndef CANDIDATE
+	Settings::setRoot("");
+	return;
+#endif
+#endif
+
+	if (!System::isFile(settingsfilename))
+	{
+		Settings::setRoot(System::getPersistentConfigRoot());
+		return;
+	}
+
+	try
+	{
+		Settings localsettings(settingsfilename, argc, argv);
+		if (localsettings.configRoot.defined()
+			&& localsettings.configRoot.value() == "")
+		{
+			Settings::setRoot("");
+			return;
+		}
+	}
+	catch (...)
+	{
+		// Ignored.
+	}
+
+	Settings::setRoot(System::getPersistentConfigRoot());
 }

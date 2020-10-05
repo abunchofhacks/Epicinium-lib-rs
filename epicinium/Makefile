@@ -52,6 +52,10 @@ else
 detected_shell = sh
 endif
 
+# override me from CONFIGFILE or from the command line (cmd/sh)
+USED_SHELL ?= $(detected_shell)
+#
+
 # Detect architecture (32-bit or 64-bit)
 ifeq ($(detected_OS),Windows)
 ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
@@ -188,12 +192,14 @@ WFLAGS_ADDED =
 
 WFLAGS_E   ?= -Werror
 
-# override me from the command line (yes/no)
-ENABLE_STEAM = no
+# override me from CONFIGFILE or from the command line (yes/no)
+ENABLE_STEAM ?= no
+ENABLE_FEMTOZIP ?= no
 #
 
 DEFINES     = $(DEFINES_PFM) $(DEFINES_DEV) $(DEFINES_CONFIG)\
-              $(DEFINES_STM) $(DEFINES_LIC) $(DEFINES_ADDED)
+              $(DEFINES_STM) $(DEFINES_FZIP)\
+              $(DEFINES_LIC) $(DEFINES_ADDED)
 
 ifeq ($(TARGET),debian32)
 DEFINES_PFM = -DPLATFORMDEBIAN32
@@ -243,6 +249,12 @@ else
 DEFINES_STM =
 endif
 
+ifeq ($(ENABLE_FEMTOZIP),yes)
+DEFINES_FZIP = -DFEMTOZIP_ENABLED=true
+else
+DEFINES_FZIP =
+endif
+
 DEFINES_LIC              =
 .obj/.lic/%: DEFINES_LIC = -DSTATIC_WRITER_ENABLED=false\
                            -DLOG_REPLACE_WITH_CALLBACK_ENABLED=true
@@ -262,7 +274,11 @@ else
 MFLAGS      = -m32
 endif
 
-IFLAGS      = $(IFLAGS_ROOT) $(IFLAGS_CORE)
+# configure me from CONFIGFILE
+IFLAGS_CONFIG ?=
+#
+
+IFLAGS      = $(IFLAGS_ROOT) $(IFLAGS_CORE) $(IFLAGS_CONFIG)
 ifeq ($(detected_OS),Windows)
 IFLAGS_ROOT = -I .
 else
@@ -279,7 +295,7 @@ LFLAGS_ADDED =
 #
 
 LFLAGS_LNCH = $(LFLAGS_CONS)
-LFLAGS_LAST = $(CFLAG_OPT) -lz -lm -pthread $(LFLAGS_CONFIG) $(LFLAGS_ADDED)
+LFLAGS_LAST = $(CFLAG_OPT) $(LFLAGS_CONFIG) $(LFLAGS_ADDED) -lz -lm -pthread
 
 %:     LPATH = $(LFLAGS_LBIN)
 bin/%: LPATH = $(LFLAGS_LDOT)
@@ -288,14 +304,13 @@ ifeq ($(detected_OS),Windows)
 LFLAGS_LDOT =
 LFLAGS_LBIN =
 LFLAGS_CPP  = -lstdc++
-LFLAGS_CONS = -Wl,--subsystem,windows -lpsapi -lshlwapi
+LFLAGS_CONS = -lpsapi -lshlwapi
 LFLAGS_AINT =
-LFLAGS_SDL  = -lmingw32 -lSDL2main -lSDL2 -lSDL2_net -lSDL2_image -lSDL2_ttf
-LFLAGS_SDLN = -lmingw32 -lSDL2main -lSDL2 -lSDL2_net
+LFLAGS_SDL  = -lSDL2main -lSDL2 -lSDL2_net -lSDL2_image -lSDL2_ttf
+LFLAGS_SDLN = -lSDL2main -lSDL2 -lSDL2_net
 LFLAGS_GL   = -lglew32 -lopengl32
 LFLAGS_SSL  = -lssl -lcrypto
 LFLAGS_CURL = -lcurl
-LFLAGS_FZIP = -lfzip
 LFLAGS_DISC = -ldiscord-rpc
 else
 ifeq ($(detected_OS),Darwin) # Mac OS X
@@ -310,7 +325,6 @@ LFLAGS_SDLN = -lSDL2_net -lSDL2
 LFLAGS_GL   = -lGLEW -framework OpenGL
 LFLAGS_SSL  = -lssl -lcrypto
 LFLAGS_CURL = -lcurl
-LFLAGS_FZIP = -lfzip
 LFLAGS_DISC = -ldiscord-rpc
 else
 LFLAGS_LDOT = -Wl,-rpath,'$$ORIGIN'
@@ -330,8 +344,23 @@ LFLAGS_SDLN = -Wl,--no-as-needed\
 LFLAGS_GL   = bin/libGLEW.so -lGL
 LFLAGS_SSL  = bin/libssl.so bin/libcrypto.so
 LFLAGS_CURL = bin/libcurl.so
-LFLAGS_FZIP = bin/libfzip.so
 LFLAGS_DISC = bin/libdiscord-rpc.so
+endif
+endif
+
+ifeq ($(ENABLE_FEMTOZIP),yes)
+LFLAGS_FZIP = $(LFLAGS_FEMTOZIP_REAL)
+else
+LFLAGS_FZIP ?=
+endif
+
+ifeq ($(detected_OS),Windows)
+LFLAGS_FEMTOZIP_REAL = -lfzip
+else
+ifeq ($(detected_OS),Darwin) # Mac OS X
+LFLAGS_FEMTOZIP_REAL = -lfzip
+else
+LFLAGS_FEMTOZIP_REAL = bin/libfzip.so
 endif
 endif
 
@@ -350,7 +379,7 @@ STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin/win64
 endif
 ifeq ($(TARGET),windows32)
 LFLAGS_STEAM_REAL = -lsteam_api
-STEAM_REAL_DEPENDENCIES = bin/libsteam_api.lib bin/libsteam_api.dll
+STEAM_REAL_DEPENDENCIES = bin/steam_api.lib bin/steam_api.dll
 STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin
 endif
 ifeq ($(TARGET),osx64)
@@ -422,7 +451,7 @@ CU_ELEMENTS       := $(shell grep -HoE "^\#include \"[a-z.]+\""\
 
 
 # override me from the command line (yes/no)
-ENABLE_CU   = yes
+ENABLE_CU  ?= yes
 #
 
 # Determine source files
@@ -566,10 +595,6 @@ pulse = CPP CORE NETW MESG SDLN SSL CURL LAST
 biblesaver = CPP CORE LAST
 sanitychecker = CPP CORE LAST
 mapchecker = CPP CORE AINT LAST
-connectstresstest = CPP CORE UNET SDLN SSL CURL FZIP LAST
-connectwaittest = CPP CORE UNET SDLN SSL CURL FZIP LAST
-countingstresstest = CPP CORE UNET SDLN SSL CURL FZIP LAST
-patchstresstest = CPP CORE UNET SDLN SSL CURL FZIP LAST
 replaytest = CPP CORE JSON LAST
 benchmarktest = CPP CMON JSON LAST
 perfalizer = CPP CMON JSON LAST
@@ -577,6 +602,7 @@ printversion = CPP CMON JSON LAST
 printprimaries = CPP CMON JSON LAST
 printsizes = CPP CORE LAST
 steamlocalizer = CPP CORE AINT LAST
+termlocalizer = CPP CORE LAST
 libepicinium = CPP CMON_LIC LGIC_LIC JSON_PIC AINT_LIC LAST
 libquickquack = CMON_PIC LGIC_PIC JSON_PIC AINT_PIC
 libhungryhippo = CMON_PIC LGIC_PIC JSON_PIC AINT_PIC
@@ -615,18 +641,28 @@ LIBRARIES   = $(filter-out bin/ai%,$(wildcard bin/*.so*))
 endif
 endif
 
+# configure me from CONFIGFILE or override me from the command line (yes/no)
+BUILD_LOC  ?= no
+#
+
 # Languages
-LOCALES     = $(patsubst translations/%.po,%,$(wildcard translations/*.po))
-LOC_FILES   = $(patsubst %,bin/loc/%/LC_MESSAGES/$(GAMENAME).mo,$(LOCALES))
+ALL_LOCALES = $(patsubst translations/%.po,%,$(wildcard translations/*.po))
+LOCALES     = $(filter-out xx_%,$(ALL_LOCALES))
+XX_LOCALES  = $(filter xx_%,$(ALL_LOCALES))
+LOC_DIRS    = $(patsubst %,data/loc/%,$(LOCALES))
+LOC_FILES   = $(patsubst %,data/loc/%/LC_MESSAGES/$(GAMENAME).mo,$(LOCALES))
+XXLOC_FILES = $(patsubst %,data/loc/%/LC_MESSAGES/$(GAMENAME).mo,$(XX_LOCALES))
 
 # Each top-level folder needs to have a dummy rule somewhere in the Makefile,
 # so we don't accidentally forget to update the Makefile when adding a new one.
 SPECIFIES   = $(patsubst %/,.dep/specify-%,\
               $(filter-out package/,$(wildcard */)))
 SPCFD_FILES = $(patsubst %,.dep/specify-%,$(SPECIFIEDS))
-SPECIFIEDS  = accounts ai archive audio bin brainstorm docs downloads essailogs\
+SPECIFIEDS  = accounts ai archive audio bin brainstorm data docs downloads\
+              essailogs\
               fonts keys libs logs maps patches packages pictures recordings\
-              resources rulesets sessions sprites src tools
+              resources rulesets sessions sprites src tools translations\
+              $(GAMENAME).app
 
 # Targets
 game: $(game_OUT) $(launcher_OUT)
@@ -713,23 +749,11 @@ $(sanitychecker_OUT): $(sanitychecker_OBJ) $(sanitychecker_DEP)
 $(mapchecker_OUT): $(mapchecker_OBJ) $(mapchecker_DEP)
 	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(mapchecker_LFLAGS)
 
-$(connectstresstest_OUT): $(connectstresstest_OBJ) $(connectstresstest_DEP)
-	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(connectstresstest_LFLAGS)
-
-$(connectwaittest_OUT): $(connectwaittest_OBJ) $(connectwaittest_DEP)
-	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(connectwaittest_LFLAGS)
-
-$(countingstresstest_OUT): $(countingstresstest_OBJ) $(countingstresstest_DEP)
-	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(countingstresstest_LFLAGS)
-
 $(replaytest_OUT): $(replaytest_OBJ) $(replaytest_DEP)
 	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(replaytest_LFLAGS)
 
 $(benchmarktest_OUT): $(benchmarktest_OBJ) $(benchmarktest_DEP)
 	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(benchmarktest_LFLAGS)
-
-$(patchstresstest_OUT): $(patchstresstest_OBJ) $(patchstresstest_DEP)
-	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(patchstresstest_LFLAGS)
 
 $(perfalizer_OUT): $(perfalizer_OBJ) $(perfalizer_DEP)
 	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(perfalizer_LFLAGS)
@@ -745,6 +769,9 @@ $(printsizes_OUT): $(printsizes_OBJ) $(printsizes_DEP)
 
 $(steamlocalizer_OUT): $(steamlocalizer_OBJ) $(steamlocalizer_DEP)
 	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(steamlocalizer_LFLAGS)
+
+$(termlocalizer_OUT): $(termlocalizer_OBJ) $(termlocalizer_DEP)
+	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(termlocalizer_LFLAGS)
 
 $(libepicinium_OUT): $(libepicinium_OBJ) $(libepicinium_DEP)
 	$(COMPILE_ALB) -o $@ $(filter %.o,$^)
@@ -768,7 +795,7 @@ bin/check: | $(SPECIFIES)
 bin/checkbible: src/logic/bible.cpp src/logic/library.cpp
 bin/checkbible: src/common/version.cpp src/common/version.hpp
 bin/checkbible: $(VARIANTFILE) | $(biblesaver_OUT)
-ifeq (detected_shell, cmd)
+ifeq (USED_SHELL, cmd)
 	"./$(biblesaver_OUT)"
 else
 	./$(biblesaver_OUT)
@@ -780,7 +807,7 @@ bin/checksanity: src/logic/unittype.hpp src/logic/tiletype.hpp
 bin/checksanity: src/logic/unittoken.hpp src/logic/tiletoken.hpp
 bin/checksanity: src/logic/change.hpp src/logic/order.hpp
 bin/checksanity: $(VARIANTFILE) | $(sanitychecker_OUT)
-ifeq (detected_shell, cmd)
+ifeq (USED_SHELL, cmd)
 	"./$(sanitychecker_OUT)"
 else
 	./$(sanitychecker_OUT)
@@ -789,7 +816,7 @@ endif
 
 bin/checkmaps: src/logic/map.cpp src/ai/aichallenge.cpp
 bin/checkmaps: $(VARIANTFILE) | $(mapchecker_OUT)
-ifeq (detected_shell, cmd)
+ifeq (USED_SHELL, cmd)
 	"./$(mapchecker_OUT)"
 else
 	./$(mapchecker_OUT)
@@ -910,10 +937,6 @@ translations/$(GAMENAME).pot: $(OUR_SOURCES)
 translations/en_US.po: translations/$(GAMENAME).pot
 	msginit --locale=en_US.utf-8 --no-translator -o $@ -i $<
 
-translations/%.po: translations/$(GAMENAME).pot
-	msgmerge --update --backup=never $@ $<
-	touch $@
-
 translations/xx_AA.po: translations/en_US.po
 	msgfilter --keep-header -o $@ -i $< sed -e 's/\([aeiuoyAEIUOY]\)/\1\1/g'
 
@@ -923,22 +946,64 @@ translations/xx_XX.po: translations/en_US.po
 			-e 's/\([^%a-zA-Z]\)\([a-zA-Z]\+\)/\1試/g' \
 			-e 's/^\([a-zA-Z]\+\)/試/g'
 
-bin/loc/%/LC_MESSAGES/$(GAMENAME).mo: translations/%.po \
-		| bin/loc/%/LC_MESSAGES/.dir_fix
-	msgfmt --verbose --check -o $@ $<
+LCLZR = translations/localizor
+$(LCLZR)/.cs_CZ.po: $(LCLZR)/Czech.po $(LCLZR)/.exported
+$(LCLZR)/.it_IT.po: $(LCLZR)/Italian.po $(LCLZR)/.exported
+$(LCLZR)/.nl_NL.po: $(LCLZR)/Dutch.po $(LCLZR)/.exported
+$(LCLZR)/.pl_PL.po: $(LCLZR)/Polish.po $(LCLZR)/.exported
+$(LCLZR)/.pt_BR.po: $(LCLZR)/Portuguese\ (BR).po $(LCLZR)/.exported
+$(LCLZR)/.ru_RU.po: $(LCLZR)/Russian.po $(LCLZR)/.exported
+$(LCLZR)/.uk_UA.po: $(LCLZR)/Ukrainian.po $(LCLZR)/.exported
 
-update-loc: $(LOC_FILES)
+LCLZR_LOC_FILES = $(patsubst %,$(LCLZR)/.%.po,$(LOCALES))
+LCLZR_CT = \"Content-Type: text\/plain; charset=UTF-8\\\\n\"
+LCLZR_CTE = \"Content-Transfer-Encoding: 8bit\\\\n\"
+$(LCLZR_LOC_FILES):
+	sed "/msgstr \"\"/a $(LCLZR_CT)\n$(LCLZR_CTE)" "$<" > $@
+
+translations/%.po: translations/$(GAMENAME).pot $(LCLZR)/.%.po
+	mv $@ translations/.old-$*.po
+	msginit --locale=$*.utf-8 --no-translator -o $@ -i $<
+	msgmerge --update --backup=off \
+		--no-fuzzy-matching \
+		--compendium $(LCLZR)/.$*.po \
+		--compendium translations/.old-$*.po \
+		$@ $<
+	touch $@
+	rm translations/.old-$*.po
+
+ifeq ($(BUILD_LOC),yes)
+data/loc/%/LC_MESSAGES/$(GAMENAME).mo: translations/%.po \
+		| data/loc/%/LC_MESSAGES
+	msgfmt --verbose --check -o $@ $<
+	touch $@
+endif
+
+data/loc/%/LC_MESSAGES:
+ifeq ($(USED_SHELL),cmd)
+	"mkdir.exe" -p "$@"
+else
+	mkdir -p $@
+endif
+.PRECIOUS: data/loc/%/LC_MESSAGES
+
+update-loc: $(LOC_FILES) $(XXLOC_FILES)
 	@echo "updated"
 .PHONY: update-loc
+
+$(LCLZR)/terms_%.csv: $(LOC_FILES) $(termlocalizer_OUT)
+	"./$(termlocalizer_OUT)" --language=$* > $@
 
 translations/steam_rich_presence.vdf: $(LOC_FILES) $(steamlocalizer_OUT)
 	"./$(steamlocalizer_OUT)" > $@
 
-ifeq ($(detected_shell),cmd)
-MKDIR = "mkdir.exe"
+# override me from CONFIGFILE or from the command line (yes/no)
+ifeq ($(USED_SHELL),cmd)
+MKDIR ?= "mkdir.exe"
 else
-MKDIR = mkdir
+MKDIR ?= mkdir
 endif
+#
 
 PICTURES         = $(filter-out pictures/kickstarter,\
                    $(filter-out pictures/steam/avatars,\
@@ -967,6 +1032,7 @@ package: | $(SPECIFIES)
 	$(MKDIR) -p ./package/rulesets
 	$(MKDIR) -p ./package/maps
 	$(MKDIR) -p ./package/bin
+	$(MKDIR) -p ./package/data/loc
 	cp -RP docs ./package/
 	cp -RP resources ./package/
 	cp -RP sprites ./package/
@@ -990,7 +1056,8 @@ package: | $(SPECIFIES)
 	cp -RP $(game_OUT) ./package/$(game_OUT)
 	cp -RP bin/ABOUT.txt ./package/bin/
 	cp -RP $(LIBRARIES) ./package/bin/
-	cp -RP bin/loc ./package/bin/
+	cp -RP data/ABOUT.txt ./package/data/
+	cp -RP $(LOC_DIRS) ./package/data/loc/
 .PHONY: package
 
 # Evaluate PVERSION only when it is called because VERSIONFILE might not exist;
@@ -1004,6 +1071,32 @@ zip: package $(VERSIONFILE)
 tar: package $(VERSIONFILE)
 	cd package && tar -czvf ../$(GAMENAME)-$(TARGET)-$(PVERSION).tar.gz *
 .PHONY: tar
+
+app: package $(VERSIONFILE)
+	rm -rf $(GAMENAME).app
+	$(MKDIR) -p $(GAMENAME).app
+	$(MKDIR) -p $(GAMENAME).app/Contents
+	$(MKDIR) -p $(GAMENAME).app/Contents/MacOS
+	$(MKDIR) -p $(GAMENAME).app/Contents/Resources
+	cp -RP Info.plist $(GAMENAME).app/Contents/
+	cp -RP package/data $(GAMENAME).app/Contents/Resources/
+	cp -RP package/docs $(GAMENAME).app/Contents/Resources/
+	cp -RP package/resources $(GAMENAME).app/Contents/Resources/
+	cp -RP package/sprites $(GAMENAME).app/Contents/Resources/
+	cp -RP package/pictures $(GAMENAME).app/Contents/Resources/
+	cp -RP package/audio $(GAMENAME).app/Contents/Resources/
+	cp -RP package/fonts $(GAMENAME).app/Contents/Resources/
+	cp -RP package/accounts $(GAMENAME).app/Contents/Resources/
+	cp -RP package/logs $(GAMENAME).app/Contents/Resources/
+	cp -RP package/recordings $(GAMENAME).app/Contents/Resources/
+	cp -RP package/sessions $(GAMENAME).app/Contents/Resources/
+	cp -RP package/downloads $(GAMENAME).app/Contents/Resources/
+	cp -RP package/keys $(GAMENAME).app/Contents/Resources/
+	cp -RP package/rulesets $(GAMENAME).app/Contents/Resources/
+	cp -RP package/maps $(GAMENAME).app/Contents/Resources/
+	cp -RP package/$(launcher_OUT) $(GAMENAME).app/Contents/MacOS/
+	cp -RP package/bin $(GAMENAME).app/Contents/MacOS/
+.PHONY: app
 
 # Dependency graphs
 GRAPH_SUBDIRS  = $(subst src/,graph-,$(wildcard src/*))
@@ -1081,7 +1174,7 @@ $(SPCFD_FILES): %: | .dep/.dir_fix
 	ln -sn ../libs .lic/libs
 
 %_fix:
-ifeq ($(detected_shell),cmd)
+ifeq ($(USED_SHELL),cmd)
 	"mkdir.exe" -p "$@"
 else
 	mkdir -p $@
@@ -1111,6 +1204,30 @@ reset:
 
 # Print variables
 print-%  : ; @echo $($*)
+
+debugprint:
+	@echo "detected_OS = $(detected_OS)"
+	@echo "detected_shell = $(detected_shell)"
+	@echo "USED_SHELL = $(USED_SHELL)"
+	@echo "MKDIR = $(MKDIR)"
+	@echo "ARCH = $(ARCH)"
+	@echo "PLATFORM = $(PLATFORM)"
+	@echo "TARGET = $(TARGET)"
+	@echo "VARIANT = $(VARIANT)"
+	@echo "PERFANT = $(PERFANT)"
+	@echo "CXX = $(CXX)"
+	@echo "CC = $(CC)"
+	@echo "AR = $(AR)"
+	@echo "CFLAGS = $(CFLAGS)"
+	@echo "IFLAGS = $(IFLAGS)"
+	@echo "LFLAGS_LAST = $(LFLAGS_LAST)"
+	@echo "STANDARD = $(STANDARD)"
+	@echo "STANDARD_C = $(STANDARD_C)"
+	@echo "ENABLE_STEAM = $(ENABLE_STEAM)"
+	@echo "ENABLE_FEMTOZIP = $(ENABLE_FEMTOZIP)"
+	@echo "ENABLE_CU = $(ENABLE_CU)"
+	@echo "BUILD_LOC = $(BUILD_LOC)"
+.PHONY: debugprint
 
 # Include generated dependencies
 -include $(ALL_INCL_DEP)

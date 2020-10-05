@@ -517,7 +517,7 @@ void Bible::initialize()
 	_tileIncome[i] = 1;
 	_tileEmission[i] = 1;
 	_tileProduces[i] = {(UnitType) SETTLER};
-	_tileUpgrades[i] = {{TileType::NONE, 10}, {(TileType) CITY, 40}};
+	_tileUpgrades[i] = {{TileType::NONE, 4}, {(TileType) CITY, 40}};
 	_tileCost[i] = 10;
 	_tileDestroyed[i] = (TileType) RUBBLE;
 

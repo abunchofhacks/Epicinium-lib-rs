@@ -239,8 +239,7 @@ void Automaton::replay(Recording& recording, bool fromOrders)
 	}
 
 	// Check compatibility.
-	if (automatonversion.major != myversion.major
-		&& myversion.isWellDefined())
+	if (automatonversion.major > myversion.major)
 	{
 		// TODO replace with friendly error message in the UI
 		LOGE << "Version mismatch while reading " << _identifier;
@@ -262,9 +261,9 @@ void Automaton::replay(Recording& recording, bool fromOrders)
 
 	// Check compatibility.
 	Version bibleversion = _bible.version();
-	if ((      bibleversion.major  != myversion.major
-			|| bibleversion.minor  >  myversion.minor)
-		&& myversion.isWellDefined())
+	if (bibleversion.major > myversion.major
+			|| (bibleversion.minor == myversion.minor
+				&& bibleversion.minor > myversion.minor))
 	{
 		// TODO replace with friendly error message in the UI
 		LOGE << "Version mismatch while reading " << _identifier;
