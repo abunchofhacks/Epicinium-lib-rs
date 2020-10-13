@@ -5223,6 +5223,8 @@ void Automaton::checkChallengeDefeat()
 void Automaton::doDefeat(const std::vector<Player>& defeats,
 		const Notice& defeatnotice)
 {
+	// This changeset can occur at any point during the Action phase;
+	// usually at the start because the Action phase only lasts a few ms.
 	ChangeSet cset;
 
 	// If players were defeated while still having some homes, they all lose
@@ -5263,7 +5265,22 @@ void Automaton::doDefeat(const std::vector<Player>& defeats,
 		// Throw away their old orders.
 		_activeorders[player].clear();
 		_activeidentifiers[player].clear();
+		// And filter them out of _activeplayers to avoid processing order
+		// _activeorders[_activeorderindices] on the next play() call.
 	}
+
+	// Filter the defeated players out of _activeplayers.
+	std::queue<Player> newactiveplayers;
+	while (!_activeplayers.empty())
+	{
+		Player player = _activeplayers.front();
+		if (!_defeated[player])
+		{
+			newactiveplayers.push(player);
+		}
+		_activeplayers.pop();
+	}
+	_activeplayers = std::move(newactiveplayers);
 
 	// How many players are left undefeated?
 	std::vector<Player> survivors;
