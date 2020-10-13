@@ -127,7 +127,14 @@ bool Library::loadIndex(const std::string& filename)
 	return true;
 }
 
-void Library::load(bool saveIfNew)
+void Library::load()
+{
+	// Cache the current bible.
+	_available.push_back(Version::current());
+	_cache.emplace_back(new Bible(Bible::createDefault()));
+}
+
+void Library::loadAndUpdateIndex()
 {
 	// Load the versions for which bibles exist from the index.
 	if (!loadIndex(_indexfilename))
@@ -184,25 +191,21 @@ void Library::load(bool saveIfNew)
 			_available.push_back(myversion);
 			_cache.emplace_back(new Bible(mybible));
 
-			if (saveIfNew)
+			if (myversion.isReleaseCandidate())
 			{
-				if (myversion.isReleaseCandidate())
+				saveBible(myversion.release().name(), mybible);
+				if (unsavedrelease)
 				{
-					saveBible(myversion.release().name(), mybible);
-					if (unsavedrelease)
-					{
-						addVersionToIndex(myversion.release());
-					}
+					addVersionToIndex(myversion.release());
 				}
-
-				saveBible(myversion.name(), mybible);
-				addVersionToIndex(myversion);
 			}
+
+			saveBible(myversion.name(), mybible);
+			addVersionToIndex(myversion);
 		}
 	}
 
 	// Save a custom ruleset.
-	if (saveIfNew)
 	{
 		Bible custombible = Bible::createCustom();
 		bool unsaved = true;

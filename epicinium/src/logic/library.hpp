@@ -55,7 +55,8 @@ private:
 	static bool addVersionToIndex(const Version& version);
 
 public:
-	void load(bool saveIfNew = false);
+	void load();
+	void loadAndUpdateIndex();
 	void install();
 
 	bool exists(const std::string& rulesetname);

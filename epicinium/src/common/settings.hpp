@@ -110,6 +110,7 @@ public:
 	Setting<std::string> configRoot;
 	Setting<std::string> dataRoot;
 	Setting<std::string> cacheRoot;
+	Setting<std::string> resourceRoot;
 	Setting<int> seed;
 	Setting<int> display;
 	Setting<ScreenMode> screenmode;

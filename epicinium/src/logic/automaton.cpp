@@ -755,7 +755,7 @@ void Automaton::gatherUnfinishedOrders(const Player& player, ChangeSet& cset)
 	_orderlists[player].reserve(_activeorders[player].size());
 	for (size_t j = 0; j < _activeorders[player].size(); j++)
 	{
-		Order& order = _activeorders[player][j];
+		Order order = std::move(_activeorders[player][j]);
 		uint32_t id = _activeidentifiers[player][j];
 		// Make sure the subject of the order was not killed or captured after
 		// the order was declared unfinished; if it was, the order is no longer
@@ -766,6 +766,7 @@ void Automaton::gatherUnfinishedOrders(const Player& player, ChangeSet& cset)
 			Change change(Change::Type::UNFINISHED, oldsubject, player, order);
 			cset.push(change, Vision::only(player));
 
+			LOGV << "keeping old order " << TypeEncoder(&_bible) << order;
 			_orderlists[player].emplace_back(std::move(order));
 		}
 	}
@@ -1543,12 +1544,13 @@ void Automaton::processMove(const Player& player, Order& order)
 	{
 		// If we had to stop moving early because of our movement speed limit,
 		// we update the list of moves still left to make.
-		LOGV << "order to be continued";
 		// The subject of the UNFINISHED change is its original position.
 		Descriptor oldsubject = order.subject;
 		// Update the order by adjusting the subject and list of moves.
 		order.subject = steps[moves];
-		std::vector<Move>(order.moves.begin() + moves, order.moves.end()).swap(order.moves);
+		order.moves.erase(order.moves.begin(), order.moves.begin() + moves);
+		// We will continue this order later.
+		LOGV << "order to be continued: " << TypeEncoder(&_bible) << order;
 		return unfinished(player, oldsubject, order, cset);
 	}
 	else

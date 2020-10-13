@@ -193,10 +193,9 @@ constexpr const char* jsonify(bool value)
 	return value ? "true" : "false";
 }
 
-#ifdef PLATFORMDEBIAN
+#ifdef PLATFORMUNIX
 #define x_snprintf snprintf
 #else
-#if defined(_MSC_VER) && _MSC_VER < 1900
 __inline int c99_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
 {
     int count = -1;
@@ -220,9 +219,6 @@ __inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
     return count;
 }
 #define x_snprintf c99_snprintf
-#else
-#define x_snprintf snprintf
-#endif
 #endif
 
 /* Format like printf but returning a string. */

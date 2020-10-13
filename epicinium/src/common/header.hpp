@@ -37,8 +37,6 @@
 #include <cctype>
 #include <tuple>
 
-#include <cctype>
-
 /* If we are running dev, we want as many crashes as possible. */
 // Usage: "DEBUG_ASSERT(xyz);"
 #ifdef DEVELOPMENT
@@ -136,7 +134,11 @@ struct stringref;
 #if STEAM_ENABLED
 #define SELF_PATCH_ENABLED false
 #else
+#ifdef PLATFORMOSX
+#define SELF_PATCH_ENABLED false
+#else
 #define SELF_PATCH_ENABLED true
+#endif
 #endif
 #endif
 

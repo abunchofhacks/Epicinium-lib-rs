@@ -508,25 +508,50 @@ std::string System::getPersistentCacheRoot()
 #ifdef PLATFORMOSX
 /* ################################## OSX ################################### */
 #include <limits.h>
-#include <NSSystemDirectories.h>
+#include <sysdir.h>
 
-inline std::string getPersistentPath(NSSearchPathDirectory dir)
+inline std::string getPersistentPath(sysdir_search_path_directory_t dir)
 {
-	auto state = NSStartSearchPathEnumeration(dir, NSUserDomainMask);
+	auto state = sysdir_start_search_path_enumeration(dir, SYSDIR_DOMAIN_MASK_USER);
 	if (state == 0)
 	{
 		LOGE << "Failed to get persistent path";
 		return "";
 	}
 	char buffer[PATH_MAX];
-	NSGetNextSearchPathEnumeration(state, buffer);
+	sysdir_get_next_search_path_enumeration(state, buffer);
 	std::string path = buffer;
 	if (path.empty())
 	{
 		LOGE << "Failed to get persistent path, returned empty string";
 		return "";
 	}
-	else if (path.back() != '/')
+
+	if (path.size() > 2 && path.substr(0, 2) == "~/")
+	{
+		if (getenv("HOME") != nullptr)
+		{
+			std::string home = getenv("HOME");
+			if (home.empty())
+			{
+				LOGE << "Failed to get HOME, returned empty string";
+			}
+			else
+			{
+				if (home.back() != '/')
+				{
+					home += "/";
+				}
+				path = home + path.substr(2);
+			}
+		}
+		else
+		{
+			LOGE << "Failed to get HOME, using literal ~";
+		}
+	}
+
+	if (path.back() != '/')
 	{
 		path += "/";
 	}
@@ -537,27 +562,27 @@ inline std::string getPersistentPath(NSSearchPathDirectory dir)
 
 std::string System::getPersistentConfigRoot()
 {
-	return getPersistentPath(NSApplicationSupportDirectory);
+	return getPersistentPath(SYSDIR_DIRECTORY_APPLICATION_SUPPORT);
 }
 
 std::string System::getPersistentDataRoot()
 {
-	return getPersistentPath(NSApplicationSupportDirectory);
+	return getPersistentPath(SYSDIR_DIRECTORY_APPLICATION_SUPPORT);
 }
 
 std::string System::getPersistentCacheRoot()
 {
-	return getPersistentPath(NSCachesDirectory);
+	return getPersistentPath(SYSDIR_DIRECTORY_CACHES);
 }
 /* ################################## OSX ################################### */
 #endif
 #ifdef PLATFORMWINDOWS
 /* ################################# WINDOWS ################################ */
-#include <shlobj_core.h>
+#include <shlobj.h>
 
 inline std::string getPersistentPath()
 {
-	const char** buffer;
+	char buffer[MAX_PATH];
 	HRESULT result = SHGetFolderPathAndSubDirA(nullptr,
 		CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE | CSIDL_FLAG_DONT_UNEXPAND,
 		nullptr, SHGFP_TYPE_CURRENT, getVariantName(), buffer);
@@ -568,7 +593,7 @@ inline std::string getPersistentPath()
 		return "";
 	}
 
-	std::string path = *buffer;
+	std::string path = buffer;
 	if (!path.empty() && path.back() != '/' && path.back() != '\\')
 	{
 		path += "/";

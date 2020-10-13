@@ -29,6 +29,12 @@ class Settings;
 
 class Language
 {
+private:
+	static std::string _locdir;
+
+public:
+	static void setRoot(const std::string& root);
+
 public:
 	class ScopedOverride
 	{

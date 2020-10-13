@@ -76,15 +76,18 @@ void Board::load(const std::string& mapname)
 	Json::Value metadata;
 	std::string line;
 
-	std::ifstream file(Map::filename(mapname));
+	std::string fname = Map::readOnlyFilename(mapname);
+	std::ifstream file(fname);
 	if (!std::getline(file, line) || !reader.parse(line, metadata)
 		|| !metadata.isObject())
 	{
 		// Try old style.
 		file.close();
-		file.open(Map::oldfilename(mapname));
+		file.open(fname);
 		if (!reader.parse(file, metadata) || !metadata.isObject())
 		{
+			LOGF << "Failed to load map '" << mapname << "' (" << fname << "): "
+				<< reader.getFormattedErrorMessages();
 			throw std::runtime_error("failed to load map " + mapname + ": \t"
 					+ reader.getFormattedErrorMessages());
 		}

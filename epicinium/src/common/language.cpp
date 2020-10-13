@@ -31,6 +31,24 @@
 #include "settings.hpp"
 
 
+std::string Language::_locdir = "data/loc";
+
+void Language::setRoot(const std::string& root)
+{
+	if (root.empty())
+	{
+		_locdir = "data/loc";
+	}
+	else if (root.back() == '/')
+	{
+		_locdir = root + "data/loc";
+	}
+	else
+	{
+		_locdir = root + "/data/loc";
+	}
+}
+
 #if INTL_ENABLED
 /* ######################################################################### */
 
@@ -58,7 +76,9 @@ inline void setEnvLanguage(const std::string& newvalue)
 
 Language::ScopedOverride::ScopedOverride(const std::string& override)
 {
-	LOGV << "Current LANGUAGE: " << getEnvLanguage();
+	if (getEnvLanguage() == nullptr) LOGV << "Current LANGUAGE is null.";
+	else LOGV << "Current LANGUAGE: " << getEnvLanguage();
+
 	std::stringstream strm;
 	strm << override;
 	if (getEnvLanguage() != nullptr)
@@ -69,7 +89,9 @@ Language::ScopedOverride::ScopedOverride(const std::string& override)
 	}
 	std::string newenv = strm.str();
 	setEnvLanguage(newenv);
-	LOGV << "Current LANGUAGE: " << getEnvLanguage();
+
+	if (getEnvLanguage() == nullptr) LOGV << "Current LANGUAGE is null.";
+	else LOGV << "Current LANGUAGE: " << getEnvLanguage();
 
 	bind();
 }
@@ -80,7 +102,9 @@ Language::ScopedOverride::~ScopedOverride()
 	{
 		setEnvLanguage(_oldvalue);
 	}
-	LOGV << "Current LANGUAGE: " << getEnvLanguage();
+
+	if (getEnvLanguage() == nullptr) LOGV << "Current LANGUAGE is null.";
+	else LOGV << "Current LANGUAGE: " << getEnvLanguage();
 
 	bind();
 }
@@ -89,16 +113,22 @@ void Language::use(const Settings& settings)
 {
 	// Change LC_MESSAGES from "C" to the system default, e.g. "en_US",
 	// because otherwise localization is disabled and LANGUAGE is ignored.
-	LOGV << "Current locale: " << setlocale(LC_ALL, NULL);
+	if (setlocale(LC_ALL, NULL) == nullptr) LOGV << "Current locale is null.";
+	else LOGV << "Current locale: " << setlocale(LC_ALL, NULL);
+
 	if (setlocale(LC_MESSAGES, "") == nullptr)
 	{
 		LOGE << "Failed to set locale to '':"
 			" " << errno << ": " << strerror(errno);
 	}
-	LOGI << "Current locale: " << setlocale(LC_ALL, NULL);
+
+	if (setlocale(LC_ALL, NULL) == nullptr) LOGV << "Current locale is null.";
+	else LOGI << "Current locale: " << setlocale(LC_ALL, NULL);
 
 	{
-		LOGV << "Current LANGUAGE: " << getEnvLanguage();
+		if (getEnvLanguage() == nullptr) LOGV << "Current LANGUAGE is null.";
+		else LOGV << "Current LANGUAGE: " << getEnvLanguage();
+
 		std::stringstream strm;
 		strm << settings.language.value("en_US");
 		if (getEnvLanguage() != nullptr)
@@ -108,7 +138,9 @@ void Language::use(const Settings& settings)
 		std::string language = strm.str();
 		setEnvLanguage(language);
 	}
-	LOGI << "Current LANGUAGE: " << getEnvLanguage();
+
+	if (getEnvLanguage() == nullptr) LOGV << "Current LANGUAGE is null.";
+	else LOGI << "Current LANGUAGE: " << getEnvLanguage();
 
 	bind();
 }
@@ -116,9 +148,8 @@ void Language::use(const Settings& settings)
 void Language::bind()
 {
 	constexpr const char* TEXTDOMAIN = "epicinium";
-	constexpr const char* LOCALEDIR = "data/loc";
 	constexpr const char* CODESET = "UTF-8";
-	if (bindtextdomain(TEXTDOMAIN, LOCALEDIR) == nullptr)
+	if (bindtextdomain(TEXTDOMAIN, _locdir.c_str()) == nullptr)
 	{
 		LOGE << "Failed to bind textdomain:"
 			" " << errno << ": " << strerror(errno);
@@ -154,6 +185,7 @@ std::vector<std::string> Language::supportedTags()
 std::vector<std::string> Language::experimentalTags()
 {
 	return {
+		"pl_PL",
 	};
 }
 
@@ -163,7 +195,6 @@ std::vector<std::string> Language::incompleteTags()
 		"cs_CZ",
 		"it_IT",
 		"nl_NL",
-		"pl_PL",
 		"pt_BR",
 		"ru_RU",
 		"uk_UA",
@@ -235,6 +266,7 @@ void Language::use(const Settings&)
 void Language::bind()
 {
 	// Nothing to do.
+	(void) _locdir;
 }
 
 bool Language::isCurrentlyEnglish()
@@ -245,6 +277,11 @@ bool Language::isCurrentlyEnglish()
 std::vector<std::string> Language::supportedTags()
 {
 	return {"en_US"};
+}
+
+std::vector<std::string> Language::incompleteTags()
+{
+	return {};
 }
 
 std::vector<std::string> Language::experimentalTags()

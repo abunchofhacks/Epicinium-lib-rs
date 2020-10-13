@@ -27,9 +27,26 @@
 #include "system.hpp"
 
 
+std::string Locator::_resourceroot = "";
 std::string Locator::_cacheroot = "";
 
-void Locator::setRoot(const std::string& root)
+void Locator::setResourceRoot(const std::string& root)
+{
+	if (root.empty())
+	{
+		_resourceroot = "";
+	}
+	else if (root.back() == '/')
+	{
+		_resourceroot = root;
+	}
+	else
+	{
+		_resourceroot = root + "/";
+	}
+}
+
+void Locator::setCacheRoot(const std::string& root)
 {
 	if (root.empty())
 	{
@@ -53,6 +70,12 @@ std::string Locator::getRelativeFilename(const std::string& filename)
 		// Cut off the cacheroot.
 		return filename.substr(_cacheroot.size());
 	}
+	else if (filename.size() > _resourceroot.size()
+		&& filename.compare(0, _resourceroot.size(), _resourceroot) == 0)
+	{
+		// Cut off the root.
+		return filename.substr(_resourceroot.size());
+	}
 	else
 	{
 		return filename;
@@ -64,10 +87,11 @@ std::string Locator::picture(const std::string& picturename)
 	std::string filename = pictureFilename(picturename);
 	// Use the pre-installed version as a fallback, if it exists, but
 	// we'll try to download a new version later (see Picture and EpiCDN).
-	std::string fallbackfilename = getRelativeFilename(filename);
+	std::string fallbackfilename = _resourceroot
+		+ getRelativeFilename(filename);
 	if (System::isFile(filename)) return filename;
 	else if (System::isFile(fallbackfilename)) return fallbackfilename;
-	else return "pictures/unknown.png";
+	else return _resourceroot + "pictures/unknown.png";
 }
 
 std::string Locator::pictureFilename(const std::string& picturename)
@@ -91,6 +115,11 @@ std::string Locator::pictureName(const std::string& fullfilename)
 std::string Locator::rulesetFilename(const std::string& rulesetname)
 {
 	return _cacheroot + "rulesets/" + rulesetname + ".json";
+}
+
+std::string Locator::rulesetResourceFilename(const std::string& rulesetname)
+{
+	return _resourceroot + "rulesets/" + rulesetname + ".json";
 }
 
 std::string Locator::rulesetName(const std::string& fullfilename)

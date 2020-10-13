@@ -57,14 +57,65 @@ std::ostream& operator<<(std::ostream& os, const PoolType& type)
 	return os << ::stringify(type);
 }
 
-std::string Map::filename(const std::string& name)
+
+std::string Map::_resourcemapsfolder = "maps/";
+std::string Map::_authoredmapsfolder = "maps/";
+
+void Map::setResourceRoot(const std::string& root)
 {
-	return "maps/" + name + ".map";
+	if (root.empty())
+	{
+		_resourcemapsfolder = "maps/";
+	}
+	else if (root.back() == '/')
+	{
+		_resourcemapsfolder = root + "maps/";
+	}
+	else
+	{
+		_resourcemapsfolder = root + "/maps/";
+	}
 }
 
-std::string Map::oldfilename(const std::string& name)
+void Map::setAuthoredRoot(const std::string& root)
 {
-	return "maps/" + name + ".json";
+	if (root.empty())
+	{
+		_authoredmapsfolder = "maps/";
+	}
+	else if (root.back() == '/')
+	{
+		_authoredmapsfolder = root + "maps/";
+	}
+	else
+	{
+		_authoredmapsfolder = root + "/maps/";
+	}
+}
+
+std::string Map::readOnlyFilename(const std::string& name)
+{
+	std::string fname = authoredFilename(name);
+	if (System::isFile(fname))
+	{
+		return fname;
+	}
+	fname = _resourcemapsfolder + name + ".map";
+	if (System::isFile(fname))
+	{
+		return fname;
+	}
+	fname = _resourcemapsfolder + name + ".json";
+	if (System::isFile(fname))
+	{
+		return fname;
+	}
+	return authoredFilename(name);
+}
+
+std::string Map::authoredFilename(const std::string& name)
+{
+	return _authoredmapsfolder + name + ".map";
 }
 
 Json::Value Map::loadMetadata(const std::string& name)
@@ -72,7 +123,7 @@ Json::Value Map::loadMetadata(const std::string& name)
 	std::ifstream file;
 	try
 	{
-		file.open(filename(name));
+		file.open(readOnlyFilename(name));
 		if (file.is_open())
 		{
 			Json::Reader reader;
@@ -98,7 +149,7 @@ Json::Value Map::loadMetadata(const std::string& name)
 bool Map::exists(const std::string& name)
 {
 	// Any file that exists exists.
-	return System::isFile(filename(name));
+	return System::isFile(readOnlyFilename(name));
 }
 
 const std::vector<std::string>& Map::pool()

@@ -61,6 +61,7 @@ Settings::Settings(std::unique_ptr<Settings> fallback) :
 	configRoot(this, "config-root"),
 	dataRoot(this, "data-root", "data-folder"),
 	cacheRoot(this, "cache-root"),
+	resourceRoot(this, "resource-root"),
 	seed(this, "seed"),
 	display(this, "display"),
 	screenmode(this, "screenmode"),
@@ -156,6 +157,14 @@ Settings::Settings() :
 #else
 	dataRoot = System::getPersistentDataRoot();
 	cacheRoot = System::getPersistentCacheRoot();
+#endif
+
+#ifdef PLATFORMOSX
+	// In OSX we now use a proper epicinium.app file.
+	if (System::isDirectory("../Resources"))
+	{
+		resourceRoot = "../Resources/";
+	}
 #endif
 }
 

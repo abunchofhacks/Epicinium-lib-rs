@@ -41,9 +41,16 @@ std::ostream& operator<<(std::ostream& os, const PoolType& type);
 
 class Map
 {
+private:
+	static std::string _resourcemapsfolder;
+	static std::string _authoredmapsfolder;
+
 public:
-	static std::string filename(const std::string& name);
-	static std::string oldfilename(const std::string& name);
+	static void setResourceRoot(const std::string& root);
+	static void setAuthoredRoot(const std::string& root);
+
+	static std::string readOnlyFilename(const std::string& name);
+	static std::string authoredFilename(const std::string& name);
 
 	static Json::Value loadMetadata(const std::string& name);
 

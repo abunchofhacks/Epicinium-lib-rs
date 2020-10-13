@@ -1,6 +1,6 @@
 [package]
 name = "epicinium_lib"
-version = "1.0.0"
+version = "1.0.3"
 authors = ["Sander in 't Veld <sanderintveld@hotmail.com>"]
 edition = "2018"
 license = "AGPL-3.0-or-later"
@@ -23,3 +23,6 @@ serde_derive = "^1.0"
 serde_json = "^1.0"
 log = "^0.4"
 libc = "^0.2"
+
+[profile.release]
+debug = true

@@ -33,6 +33,7 @@ public:
 	static std::string pictureFilename(const std::string& picturename);
 	static std::string pictureName(const std::string& filename);
 	static std::string rulesetFilename(const std::string& rulesetname);
+	static std::string rulesetResourceFilename(const std::string& rulesetname);
 	static std::string rulesetName(const std::string& filename);
 	static std::string fzmodelFilename(const std::string& fzmodelname);
 	static std::string fzmodelName(const std::string& filename);
@@ -40,8 +41,10 @@ public:
 	static std::string getRelativeFilename(const std::string& filename);
 
 private:
+	static std::string _resourceroot;
 	static std::string _cacheroot;
 
 public:
-	static void setRoot(const std::string& root);
+	static void setResourceRoot(const std::string& root);
+	static void setCacheRoot(const std::string& root);
 };
