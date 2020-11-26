@@ -35,6 +35,9 @@
 static std::string _indexfilename = "rulesets/index.list";
 static std::string _localindexfilename = "rulesets/local.list";
 
+// It is not called "latest" because it cannot have the word "test" in it.
+static std::string _latestrulesetname = "current";
+
 static std::mutex _mutex;
 
 Library* Library::_installed = nullptr;
@@ -90,7 +93,7 @@ bool Library::loadIndex(const std::string& filename)
 	// Our bible is the most recent bible, unless shown otherwise.
 	Version myversion = Version::current();
 
-	std::ifstream index(filename);
+	std::ifstream index = System::ifstream(filename);
 	if (!index.is_open())
 	{
 		return false;
@@ -129,9 +132,26 @@ bool Library::loadIndex(const std::string& filename)
 
 void Library::load()
 {
+	if (System::isFile(Locator::rulesetFilename(_latestrulesetname)))
+	{
+		// Cache the most recent bible.
+		loadBible(_latestrulesetname);
+		Version latestversion = _cache.back()->version().release();
+		// Also cache the original copy, so we know that that file exists.
+		_available.push_back(latestversion);
+		loadBible(latestversion);
+
+		if (latestversion.major == Version::current().major
+				&& *(_cache.back()) == Bible::createDefault())
+		{
+			return;
+		}
+	}
+
 	// Cache the current bible.
 	_available.push_back(Version::current());
 	_cache.emplace_back(new Bible(Bible::createDefault()));
+	LOGD << "Cached " << _cache.back()->name();
 }
 
 void Library::loadAndUpdateIndex()
@@ -160,6 +180,7 @@ void Library::loadAndUpdateIndex()
 	{
 		_available.push_back(myversion);
 		_cache.emplace_back(new Bible(Bible::createDefault()));
+		LOGD << "Cached " << _cache.back()->name();
 	}
 	// We are not in dev. If our bible is more recent, cache it.
 	// If it has not yet been saved, save it.
@@ -190,6 +211,7 @@ void Library::loadAndUpdateIndex()
 		{
 			_available.push_back(myversion);
 			_cache.emplace_back(new Bible(mybible));
+			LOGD << "Cached " << _cache.back()->name();
 
 			if (myversion.isReleaseCandidate())
 			{
@@ -197,6 +219,7 @@ void Library::loadAndUpdateIndex()
 				if (unsavedrelease)
 				{
 					addVersionToIndex(myversion.release());
+					saveBible(_latestrulesetname, mybible);
 				}
 			}
 
@@ -230,7 +253,7 @@ bool Library::saveBible(const std::string& rulesetname, const Bible& bible)
 	std::string fname = Locator::rulesetFilename(rulesetname);
 	std::cout << "Saving '" << fname << "'..." << std::endl;
 
-	std::ofstream file(fname);
+	std::ofstream file = System::ofstream(fname);
 	if (!file.is_open())
 	{
 		LOGE << "Could not open " << fname;
@@ -252,7 +275,7 @@ bool Library::addVersionToIndex(const Version& version)
 
 	if (version.isRelease())
 	{
-		std::ofstream index(_indexfilename,
+		std::ofstream index = System::ofstream(_indexfilename,
 			std::ofstream::out | std::ofstream::app);
 		if (!index.is_open())
 		{
@@ -265,7 +288,7 @@ bool Library::addVersionToIndex(const Version& version)
 	}
 	else
 	{
-		std::ofstream index(_localindexfilename,
+		std::ofstream index = System::ofstream(_localindexfilename,
 			std::ofstream::out | std::ofstream::app);
 		if (!index.is_open())
 		{
@@ -290,7 +313,7 @@ const Bible& Library::loadBible(const Version& version)
 const Bible& Library::loadBible(const std::string& rulesetname)
 {
 	std::string fname = Locator::rulesetFilename(rulesetname);
-	std::ifstream file(fname);
+	std::ifstream file = System::ifstream(fname);
 	if (!file.is_open())
 	{
 		LOGF << "Could not open " << fname;
@@ -310,6 +333,7 @@ const Bible& Library::loadBible(const std::string& rulesetname)
 	try
 	{
 		_cache.emplace_back(new Bible(rulesetname, json));
+		LOGD << "Cached " << _cache.back()->name();
 		return *(_cache.back());
 	}
 	catch (const ParseError& error)

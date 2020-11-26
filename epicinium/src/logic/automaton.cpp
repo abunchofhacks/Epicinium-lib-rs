@@ -45,6 +45,7 @@
 #include "recordingiterator.hpp"
 #include "challenge.hpp"
 #include "typenamer.hpp"
+#include "system.hpp"
 
 
 Automaton::Automaton(size_t playercount, const std::string& rulesetname) :
@@ -90,7 +91,8 @@ void Automaton::startRecording(Json::Value metadata,
 		recording.start();
 	}
 	_identifier = recording.name();
-	_recording.open(recording.filename(), std::ofstream::out | std::ofstream::app);
+	_recording = System::ofstream(recording.filename(),
+		std::ofstream::out | std::ofstream::app);
 	if (!_recording)
 	{
 		LOGW << "Failed to open " << recording.filename() << " for writing";

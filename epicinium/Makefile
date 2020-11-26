@@ -30,6 +30,14 @@ EMPTY :=
 SPACE := $(EMPTY) #
 COMMA := ,
 
+# Per-repository config. Variables defined with ?= can be configured.
+CUSTOMFILE = ./.custom.make
+ifeq ($(wildcard $(CUSTOMFILE)),) # does not exist
+# Nothing to do.
+else
+include $(CUSTOMFILE)
+endif
+
 # Per-device config. Variables defined with ?= can be configured.
 CONFIGFILE = ./.config.make
 ifeq ($(wildcard $(CONFIGFILE)),) # does not exist
@@ -136,7 +144,7 @@ endif
 
 CFLAGS      = $(CFLAG_OPT) $(CFLAG_SYM) $(WFLAGS) -pthread $(DEFINES)
 CFLAGS_CC   = $(CFLAG_OPT) $(CFLAG_SYM) $(WFLAGS_C) $(DEFINES)
-CFLAGS_LIB  = $(CFLAG_OPT) $(CFLAG_SYM)
+CFLAGS_LIB  = $(CFLAG_OPT) $(CFLAG_SYM) $(DEFINES_LIB)
 
 CFLAG_ONAT ?= -march=native -O3
 CFLAG_ODEV ?= -Og
@@ -153,8 +161,12 @@ endif
 endif
 
 ifeq ($(VARIANT),release)
-ifeq ($(TARGET),osx64)
+ifeq ($(detected_OS),Darwin) # Mac OS X
+ifeq ($(ENABLE_STEAM),yes)
+CFLAG_SYM  ?= -mmacosx-version-min=10.9
+else
 CFLAG_SYM  ?=
+endif
 else
 CFLAG_SYM  ?= -s
 endif
@@ -190,16 +202,18 @@ WFLAGS_ADDED =
 #              -Walloc-zero -Walloc-size-larger-than=1048576\
 #              -Wlarger-than=1048576 -Wvla-larger-than=1048576\
 
-WFLAGS_E   ?= -Werror
+WFLAGS_E   ?=
 
 # override me from CONFIGFILE or from the command line (yes/no)
 ENABLE_STEAM ?= no
 ENABLE_FEMTOZIP ?= no
 #
 
-DEFINES     = $(DEFINES_PFM) $(DEFINES_DEV) $(DEFINES_CONFIG)\
+DEFINES     = $(DEFINES_PFM) $(DEFINES_DEV)\
+              $(DEFINES_CUSTOM) $(DEFINES_CONFIG)\
               $(DEFINES_STM) $(DEFINES_FZIP)\
-              $(DEFINES_LIC) $(DEFINES_ADDED)
+              $(DEFINES_PIC) $(DEFINES_LIC)\
+              $(DEFINES_ADDED)
 
 ifeq ($(TARGET),debian32)
 DEFINES_PFM = -DPLATFORMDEBIAN32
@@ -239,6 +253,10 @@ endif
 endif
 endif
 
+# configure me from CUSTOMFILE
+DEFINES_CUSTOM ?=
+#
+
 # configure me from CONFIGFILE
 DEFINES_CONFIG ?=
 #
@@ -255,6 +273,10 @@ else
 DEFINES_FZIP =
 endif
 
+DEFINES_PIC              =
+.obj/.pic/%: DEFINES_PIC = -DINTL_ENABLED=false
+.obj/.lic/%: DEFINES_PIC = -DINTL_ENABLED=false
+
 DEFINES_LIC              =
 .obj/.lic/%: DEFINES_LIC = -DSTATIC_WRITER_ENABLED=false\
                            -DLOG_REPLACE_WITH_CALLBACK_ENABLED=true
@@ -263,10 +285,17 @@ DEFINES_LIC              =
 DEFINES_ADDED =
 #
 
+DEFINES_LIB =
+ifeq ($(detected_OS),Windows)
+.obj/libs/tinygettext/%: DEFINES_LIB = -DTINYGETTEXT_WITH_SDL
+endif
+
 DFLAGS      = -MT .obj/$*.o -MMD -MP -MF .dep/$*.Td
 
 STANDARD   ?= -std=c++11
 STANDARD_C ?= -std=c99
+
+.obj/libs/tinygettext/%: STANDARD = -std=c++17
 
 ifeq ($(TARGET),$(PLATFORM))
 MFLAGS      =
@@ -278,13 +307,19 @@ endif
 IFLAGS_CONFIG ?=
 #
 
-IFLAGS      = $(IFLAGS_ROOT) $(IFLAGS_CORE) $(IFLAGS_CONFIG)
+IFLAGS_FULL = $(IFLAGS_ROOT) $(IFLAGS_CORE) $(IFLAGS_CONFIG) $(IFLAGS_LIB)
+IFLAGS      = $(IFLAGS_ROOT) $(IFLAGS_CONFIG) $(IFLAGS_LIB)
+
 ifeq ($(detected_OS),Windows)
 IFLAGS_ROOT = -I .
 else
 IFLAGS_ROOT = -I ./
 endif
+
 IFLAGS_CORE = $(foreach d,$(wildcard src/*/),-I $d)
+
+IFLAGS_LIB =
+.obj/libs/tinygettext/%: IFLAGS_LIB = -I libs -I libs/SDL2
 
 # configure me from CONFIGFILE
 LFLAGS_CONFIG ?=
@@ -312,6 +347,7 @@ LFLAGS_GL   = -lglew32 -lopengl32
 LFLAGS_SSL  = -lssl -lcrypto
 LFLAGS_CURL = -lcurl
 LFLAGS_DISC = -ldiscord-rpc
+LFLAGS_INTL = -lSDL2
 else
 ifeq ($(detected_OS),Darwin) # Mac OS X
 LFLAGS_LDOT = -Wl,-rpath,@executable_path/ -Lbin
@@ -326,6 +362,7 @@ LFLAGS_GL   = -lGLEW -framework OpenGL
 LFLAGS_SSL  = -lssl -lcrypto
 LFLAGS_CURL = -lcurl
 LFLAGS_DISC = -ldiscord-rpc
+LFLAGS_INTL = -lstdc++fs
 else
 LFLAGS_LDOT = -Wl,-rpath,'$$ORIGIN'
 LFLAGS_LBIN = -Wl,-rpath,'$$ORIGIN/bin'
@@ -345,6 +382,7 @@ LFLAGS_GL   = bin/libGLEW.so -lGL
 LFLAGS_SSL  = bin/libssl.so bin/libcrypto.so
 LFLAGS_CURL = bin/libcurl.so
 LFLAGS_DISC = bin/libdiscord-rpc.so
+LFLAGS_INTL = -lstdc++fs
 endif
 endif
 
@@ -383,7 +421,7 @@ STEAM_REAL_DEPENDENCIES = bin/steam_api.lib bin/steam_api.dll
 STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin
 endif
 ifeq ($(TARGET),osx64)
-LFLAGS_STEAM_REAL = -lsteam_api
+LFLAGS_STEAM_REAL = -lsteam_api -mmacosx-version-min=10.9
 STEAM_REAL_DEPENDENCIES = bin/libsteam_api.dylib
 STEAM_ARCHIVE_REDIS_DIR = archive/steam/redistributable_bin/osx
 endif
@@ -422,16 +460,16 @@ DIRFIXES    = $(DEPDIRFIXES) $(OBJDIRFIXES) $(PICDIRFIXES) $(LICDIRFIXES)
 # Compiling
 C_CXX       = $(CXX) $(MFLAGS) $(STANDARD) $(DFLAGS)
 C_CC        = $(CC) $(MFLAGS) $(STANDARD_C) $(DFLAGS)
-.obj/%:           COMPILE_OBJ = $(C_CXX) $(CFLAGS) $(IFLAGS)
-.obj/libs/%:      COMPILE_OBJ = $(C_CXX) $(CFLAGS_LIB) $(IFLAGS_ROOT)
-.obj/%:           COMPILE_COB = $(C_CC) $(CFLAGS_CC) $(IFLAGS_ROOT)
-.obj/libs/%:      COMPILE_COB = $(C_CC) $(CFLAGS_LIB) $(IFLAGS_ROOT)
-.obj/.pic/%:      COMPILE_OBJ = $(C_CXX) $(FPIC) $(CFLAGS) $(IFLAGS)
-.obj/.pic/libs/%: COMPILE_OBJ = $(C_CXX) $(FPIC) $(CFLAGS_LIB) $(IFLAGS_ROOT)
-.obj/.pic/%:      COMPILE_COB = $(C_CC) $(FPIC) $(CFLAGS_CC) $(IFLAGS_ROOT)
-.obj/.pic/libs/%: COMPILE_COB = $(C_CC) $(FPIC) $(CFLAGS_LIB) $(IFLAGS_ROOT)
-.obj/.lic/%:      COMPILE_OBJ = $(C_CXX) $(FPIC) $(CFLAGS) $(IFLAGS)
-.obj/.lic/%:      COMPILE_COB = $(C_CC) $(FPIC) $(CFLAGS_CC) $(IFLAGS_ROOT)
+.obj/%:           COMPILE_OBJ = $(C_CXX) $(CFLAGS) $(IFLAGS_FULL)
+.obj/libs/%:      COMPILE_OBJ = $(C_CXX) $(CFLAGS_LIB) $(IFLAGS)
+.obj/%:           COMPILE_COB = $(C_CC) $(CFLAGS_CC) $(IFLAGS)
+.obj/libs/%:      COMPILE_COB = $(C_CC) $(CFLAGS_LIB) $(IFLAGS)
+.obj/.pic/%:      COMPILE_OBJ = $(C_CXX) $(FPIC) $(CFLAGS) $(IFLAGS_FULL)
+.obj/.pic/libs/%: COMPILE_OBJ = $(C_CXX) $(FPIC) $(CFLAGS_LIB) $(IFLAGS)
+.obj/.pic/%:      COMPILE_COB = $(C_CC) $(FPIC) $(CFLAGS_CC) $(IFLAGS)
+.obj/.pic/libs/%: COMPILE_COB = $(C_CC) $(FPIC) $(CFLAGS_LIB) $(IFLAGS)
+.obj/.lic/%:      COMPILE_OBJ = $(C_CXX) $(FPIC) $(CFLAGS) $(IFLAGS_FULL)
+.obj/.lic/%:      COMPILE_COB = $(C_CC) $(FPIC) $(CFLAGS_CC) $(IFLAGS)
 COMPILE_BIN = $(C_CXX)
 COMPILE_CBN = $(C_CC)
 COMPILE_ALB = $(AR) rvs
@@ -477,6 +515,7 @@ ENGI_SRC    = $(call listsrc,engine)
 JSON_SRC    = $(wildcard libs/jsoncpp/*.cpp)
 IMGU_SRC    = $(wildcard libs/imgui/*.cpp)
 SDL_SRC     = $(wildcard libs/SDL2/*.c)
+INTL_SRC    = $(wildcard libs/tinygettext/*.cpp)
 MAIN_SRC    = $(call listsrc,main)
 SERV_SRC    = $(call listsrc,server)
 EDIT_SRC    = $(call listsrc,edit)
@@ -487,12 +526,12 @@ LNCH_SRC    = src/build/launcher.c
 # Build targets are composed of parts
 PARTS       = LNCH MAIN SERV EDIT ESSA\
               CMON LGIC AINT NETW MESG USER GRFX ACTN AUDI INFC ENGI\
-              JSON SDL SLDN IMGU GL SSL CURL FZIP DISC\
+              JSON SDL SLDN IMGU GL SSL CURL FZIP DISC INTL\
               CORE UNET ENGN LAST
 
 CPP_PARTS   = MAIN SERV EDIT ESSA\
               CMON LGIC AINT NETW MESG USER GRFX ACTN AUDI INFC ENGI\
-              JSON IMGU\
+              JSON IMGU INTL\
               TOOL
 C_PARTS     = LNCH SDL
 COMP_PARTS  = CORE UNET ENGN
@@ -504,6 +543,12 @@ ENGN_ELEMS  = ENGI GRFX AUDI ACTN INFC
 SRC_PARTS   = $(CPP_PARTS) $(C_PARTS)\
               $(CPP_PARTS:%=%_PIC) $(C_PARTS:%=%_PIC)\
               $(CPP_PARTS:%=%_LIC) $(C_PARTS:%=%_LIC)
+
+# Flags
+$(foreach part,$(PARTS),\
+	$(eval LFLAGS_$(part)_PIC = $(LFLAGS_$(part))))
+$(foreach part,$(PARTS),\
+	$(eval LFLAGS_$(part)_LIC = $(LFLAGS_$(part))))
 
 # Objects
 $(foreach part,$(CPP_PARTS),\
@@ -555,8 +600,10 @@ ALL_INCL_DEP = $(wildcard .dep/*.d) $(wildcard .dep/.*.d)\
 MAINNAMES = launcher game server editor essai\
             automatonlib libepicinium quicktest
 TOOLNAMES = $(TOOL_SRC:src/build/%.cpp=%)
+TBOTNAMES = $(filter bot%,$(TOOLNAMES))
 TAILNAMES = $(filter-out $(MAINNAMES),$(filter lib%,$(TOOLNAMES)))
-TBINNAMES = $(filter-out $(TAILNAMES),$(filter-out $(MAINNAMES),$(TOOLNAMES)))
+TBINNAMES = $(filter-out $(TAILNAMES),$(filter-out $(TBOTNAMES),\
+            $(filter-out $(MAINNAMES),$(TOOLNAMES))))
 NAMES     = $(MAINNAMES) $(TOOLNAMES)
 
 # Binaries
@@ -570,6 +617,7 @@ automatonlib_OUT = bin/$(GAMENAME)-automaton.lib
 $(foreach tool,$(TBINNAMES),$(eval $(tool)_OUT = bin/$(tool).exe))
 libepicinium_OUT = bin/libepicinium.lib
 $(foreach tool,$(TAILNAMES),$(eval $(tool)_OUT = $(tool:lib%=bin/ai%.dll)))
+$(foreach tool,$(TBOTNAMES),$(eval $(tool)_OUT = $(tool:%=bin/%.exe)))
 else
 launcher_OUT = $(GAMENAME)
 game_OUT = bin/game
@@ -580,33 +628,36 @@ automatonlib_OUT = bin/$(GAMENAME)-automaton.a
 $(foreach tool,$(TBINNAMES),$(eval $(tool)_OUT = bin/$(tool)))
 libepicinium_OUT = bin/libepicinium.a
 $(foreach tool,$(TAILNAMES),$(eval $(tool)_OUT = $(tool:lib%=bin/ai%.so)))
+$(foreach tool,$(TBOTNAMES),$(eval $(tool)_OUT = $(tool:%=bin/%)))
 endif
 quicktest_OUT =
 ALL_OUT = $(foreach name,$(NAMES),$($(name)_OUT))
 
 # Build parts
 launcher = LNCH
-game = CPP MAIN CORE AINT UNET ENGN SDL IMGU GL SSL CURL FZIP DISC STM LAST
-server = CPP SERV CORE AINT NETW MESG SDLN SSL CURL FZIP LAST
-editor = CPP EDIT CORE AINT ENGN SDL IMGU GL LAST
-essai = CPP ESSA CORE AINT LAST
+game = CPP MAIN CORE AINT UNET ENGN SDL IMGU GL SSL CURL FZIP DISC INTL STM LAST
+server = CPP SERV CORE AINT NETW MESG SDLN SSL CURL FZIP INTL LAST
+editor = CPP EDIT CORE AINT ENGN SDL IMGU GL INTL LAST
+essai = CPP ESSA CORE AINT INTL LAST
 automatonlib = CPP CMON_PIC LGIC_PIC AINT_PIC LAST
-pulse = CPP CORE NETW MESG SDLN SSL CURL LAST
-biblesaver = CPP CORE LAST
-sanitychecker = CPP CORE LAST
-mapchecker = CPP CORE AINT LAST
-replaytest = CPP CORE JSON LAST
-benchmarktest = CPP CMON JSON LAST
-perfalizer = CPP CMON JSON LAST
-printversion = CPP CMON JSON LAST
-printprimaries = CPP CMON JSON LAST
-printsizes = CPP CORE LAST
-steamlocalizer = CPP CORE AINT LAST
-termlocalizer = CPP CORE LAST
+pulse = CPP CORE NETW MESG SDLN SSL CURL INTL LAST
+biblesaver = CPP CMON_PIC LGIC_PIC JSON_PIC LAST
+sanitychecker = CPP CMON_PIC LGIC_PIC JSON_PIC LAST
+mapchecker = CPP CMON_PIC LGIC_PIC JSON_PIC AINT_PIC LAST
+replaytest = CPP CMON_PIC LGIC_PIC JSON_PIC LAST
+benchmarktest = CPP CMON_PIC JSON_PIC LAST
+perfalizer = CPP CMON_PIC JSON_PIC LAST
+printversion = CPP CMON_PIC JSON_PIC LAST
+printprimaries = CPP CMON_PIC JSON_PIC LAST
+printsizes = CPP CMON_PIC LGIC_PIC JSON_PIC LAST
+steamlocalizer = CPP CORE AINT INTL LAST
+termlocalizer = CPP CORE INTL LAST
 libepicinium = CPP CMON_LIC LGIC_LIC JSON_PIC AINT_LIC LAST
-libquickquack = CMON_PIC LGIC_PIC JSON_PIC AINT_PIC
-libhungryhippo = CMON_PIC LGIC_PIC JSON_PIC AINT_PIC
-librampantrhino = CMON_PIC LGIC_PIC JSON_PIC AINT_PIC
+$(foreach tool,$(TAILNAMES),\
+	$(eval $(tool) = CMON_PIC LGIC_PIC JSON_PIC AINT_PIC))
+$(foreach tool,$(TBOTNAMES),\
+	$(eval $(tool) = CPP CMON_PIC LGIC_PIC JSON_PIC AINT_PIC \
+		NETW MESG SDLN SSL CURL LAST))
 quicktest =
 
 $(foreach name,$(NAMES),\
@@ -630,6 +681,12 @@ $(foreach tool,$(TAILNAMES),\
 	$(eval $(tool)_DEP    = .dep/.pic/src/build/$(tool).d $($(tool)_DEP))\
 	)
 
+$(foreach tool,$(TBOTNAMES),\
+	$(eval $(name)_LFLAGS = $(foreach part,$($(name)),$(LFLAGS_$(part))))\
+	$(eval $(tool)_OBJ    = .obj/.pic/src/build/$(tool).o $($(tool)_OBJ))\
+	$(eval $(tool)_DEP    = .dep/.pic/src/build/$(tool).d $($(tool)_DEP))\
+	)
+
 # Libraries
 ifeq ($(detected_OS),Windows)
 LIBRARIES   = $(filter-out bin/ai%,$(wildcard bin/*.dll))
@@ -643,15 +700,15 @@ endif
 
 # configure me from CONFIGFILE or override me from the command line (yes/no)
 BUILD_LOC  ?= no
+CHECK_ALL  ?= no
 #
 
 # Languages
 ALL_LOCALES = $(patsubst translations/%.po,%,$(wildcard translations/*.po))
 LOCALES     = $(filter-out xx_%,$(ALL_LOCALES))
 XX_LOCALES  = $(filter xx_%,$(ALL_LOCALES))
-LOC_DIRS    = $(patsubst %,data/loc/%,$(LOCALES))
-LOC_FILES   = $(patsubst %,data/loc/%/LC_MESSAGES/$(GAMENAME).mo,$(LOCALES))
-XXLOC_FILES = $(patsubst %,data/loc/%/LC_MESSAGES/$(GAMENAME).mo,$(XX_LOCALES))
+LOC_FILES   = $(patsubst %,data/loc/%.po,$(LOCALES))
+XXLOC_FILES = $(patsubst %,data/loc/%.po,$(XX_LOCALES))
 
 # Each top-level folder needs to have a dummy rule somewhere in the Makefile,
 # so we don't accidentally forget to update the Makefile when adding a new one.
@@ -686,14 +743,16 @@ libepicinium: $(libepicinium_OUT)
 
 ifeq ($(detected_OS),Windows)
 $(TBINNAMES): %: bin/%.exe
+$(TBOTNAMES): %: bin/%.exe
 $(TAILNAMES): lib%: bin/ai%.dll
 else
 $(TBINNAMES): %: bin/%
+$(TBOTNAMES): %: bin/%
 $(TAILNAMES): lib%: bin/ai%.so
 endif
 .PHONY: $(TOOLNAMES)
 
-$(game_OUT): $(game_OBJ) $(game_DEP) $(RECOMPILERS) bin/check
+$(game_OUT): $(game_OBJ) $(game_DEP) $(RECOMPILERS) bin/checksome
 	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(game_LFLAGS)
 ifeq ($(detected_OS),Darwin) # Mac OS X
 #	$(FIX_LIBSTD_DYLIB) $(game_OUT)
@@ -782,11 +841,28 @@ $(libquickquack_OUT): $(libquickquack_OBJ) $(libquickquack_DEP)
 $(libhungryhippo_OUT): $(libhungryhippo_OBJ) $(libhungryhippo_DEP)
 	$(COMPILE_AIL) -o $@ $(filter %.o,$^)
 
+$(libchargingcheetah_OUT): $(libchargingcheetah_OBJ) $(libchargingcheetah_DEP)
+	$(COMPILE_AIL) -o $@ $(filter %.o,$^)
+
 $(librampantrhino_OUT): $(librampantrhino_OBJ) $(librampantrhino_DEP)
 	$(COMPILE_AIL) -o $@ $(filter %.o,$^)
 
+$(botquickquack_OUT): $(botquickquack_OBJ) $(botquickquack_DEP)
+	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(botquickquack_LFLAGS)
+
+$(botchargingcheetah_OUT): $(botchargingcheetah_OBJ) $(botchargingcheetah_DEP)
+	$(COMPILE_BIN) -o $@ $(filter %.o,$^) $(LPATH) $(botchargingcheetah_LFLAGS)
+
 all: $(ALL_OUT)
 .PHONY: all
+
+ifeq ($(CHECK_ALL),yes)
+bin/checksome: bin/check
+	touch bin/checksome
+else
+bin/checksome: bin/checksanity
+	touch bin/checksome
+endif
 
 bin/check: bin/checkbible bin/checksanity bin/checkmaps
 bin/check: | $(SPECIFIES)
@@ -948,44 +1024,45 @@ translations/xx_XX.po: translations/en_US.po
 
 LCLZR = translations/localizor
 $(LCLZR)/.cs_CZ.po: $(LCLZR)/Czech.po $(LCLZR)/.exported
+$(LCLZR)/.de_DE.po: $(LCLZR)/German.po $(LCLZR)/.exported
+$(LCLZR)/.es_ES.po: $(LCLZR)/Spanish\ (Spain).po $(LCLZR)/.exported
+$(LCLZR)/.fi_FI.po: $(LCLZR)/Finnish.po $(LCLZR)/.exported
+$(LCLZR)/.fr_FR.po: $(LCLZR)/French.po $(LCLZR)/.exported
 $(LCLZR)/.it_IT.po: $(LCLZR)/Italian.po $(LCLZR)/.exported
 $(LCLZR)/.nl_NL.po: $(LCLZR)/Dutch.po $(LCLZR)/.exported
 $(LCLZR)/.pl_PL.po: $(LCLZR)/Polish.po $(LCLZR)/.exported
 $(LCLZR)/.pt_BR.po: $(LCLZR)/Portuguese\ (BR).po $(LCLZR)/.exported
 $(LCLZR)/.ru_RU.po: $(LCLZR)/Russian.po $(LCLZR)/.exported
+$(LCLZR)/.tr_TR.po: $(LCLZR)/Turkish.po $(LCLZR)/.exported
 $(LCLZR)/.uk_UA.po: $(LCLZR)/Ukrainian.po $(LCLZR)/.exported
 
 LCLZR_LOC_FILES = $(patsubst %,$(LCLZR)/.%.po,$(LOCALES))
-LCLZR_CT = \"Content-Type: text\/plain; charset=UTF-8\\\\n\"
+LCLZR_CT = \"Content-Type: text/plain; charset=UTF-8\\\\n\"
 LCLZR_CTE = \"Content-Transfer-Encoding: 8bit\\\\n\"
 $(LCLZR_LOC_FILES):
-	sed "/msgstr \"\"/a $(LCLZR_CT)\n$(LCLZR_CTE)" "$<" > $@
+	echo "msgid \"\"\nmsgstr \"\"\n$(LCLZR_CT)\n$(LCLZR_CTE)" > $@
+	tail -n +3 "$<" >> $@
 
 translations/%.po: translations/$(GAMENAME).pot $(LCLZR)/.%.po
-	mv $@ translations/.old-$*.po
 	msginit --locale=$*.utf-8 --no-translator -o $@ -i $<
 	msgmerge --update --backup=off \
 		--no-fuzzy-matching \
 		--compendium $(LCLZR)/.$*.po \
-		--compendium translations/.old-$*.po \
 		$@ $<
 	touch $@
-	rm translations/.old-$*.po
 
 ifeq ($(BUILD_LOC),yes)
-data/loc/%/LC_MESSAGES/$(GAMENAME).mo: translations/%.po \
-		| data/loc/%/LC_MESSAGES
-	msgfmt --verbose --check -o $@ $<
-	touch $@
+data/loc/%.po: translations/%.po data/loc
+	sed '/^#:/d' < $< > $@
 endif
 
-data/loc/%/LC_MESSAGES:
+data/loc:
 ifeq ($(USED_SHELL),cmd)
 	"mkdir.exe" -p "$@"
 else
 	mkdir -p $@
 endif
-.PRECIOUS: data/loc/%/LC_MESSAGES
+.PRECIOUS: data/loc
 
 update-loc: $(LOC_FILES) $(XXLOC_FILES)
 	@echo "updated"
@@ -1005,10 +1082,6 @@ MKDIR ?= mkdir
 endif
 #
 
-PICTURES         = $(filter-out pictures/kickstarter,\
-                   $(filter-out pictures/steam/avatars,\
-                   $(filter-out pictures/discord/avatars,\
-                   $(wildcard pictures/*))))
 RULESETS         = $(filter-out $(wildcard rulesets/*test*),\
                    $(filter-out $(wildcard rulesets/*internal*),\
                    $(filter-out $(wildcard rulesets/*-rc*.json),\
@@ -1017,7 +1090,7 @@ RULESETS         = $(filter-out $(wildcard rulesets/*test*),\
 MAPS             = $(filter-out $(wildcard maps/*test*),\
                    $(wildcard maps/*.map))
 
-package: game $(LOC_FILES)
+package: game $(LOC_FILES) bin/check
 package: | $(SPECIFIES)
 	rm -rf ./package/
 	$(MKDIR) -p ./package
@@ -1036,7 +1109,11 @@ package: | $(SPECIFIES)
 	cp -RP docs ./package/
 	cp -RP resources ./package/
 	cp -RP sprites ./package/
-	cp -RP $(PICTURES) ./package/pictures/
+	cp -RP pictures/ABOUT.txt ./package/pictures/
+	cp -RP pictures/unknown.png ./package/pictures/
+	cp -RP pictures/art ./package/pictures/
+	cp -RP pictures/panels ./package/pictures/
+	cp -RP pictures/discord/default.png ./package/pictures/discord/
 	cp -RP audio ./package/
 	cp -RP fonts ./package/
 	cp -RP INSTALL.txt ./package/
@@ -1057,7 +1134,7 @@ package: | $(SPECIFIES)
 	cp -RP bin/ABOUT.txt ./package/bin/
 	cp -RP $(LIBRARIES) ./package/bin/
 	cp -RP data/ABOUT.txt ./package/data/
-	cp -RP $(LOC_DIRS) ./package/data/loc/
+	cp -RP $(LOC_FILES) ./package/data/loc/
 .PHONY: package
 
 # Evaluate PVERSION only when it is called because VERSIONFILE might not exist;
@@ -1220,6 +1297,7 @@ debugprint:
 	@echo "AR = $(AR)"
 	@echo "CFLAGS = $(CFLAGS)"
 	@echo "IFLAGS = $(IFLAGS)"
+	@echo "IFLAGS_FULL = $(IFLAGS_FULL)"
 	@echo "LFLAGS_LAST = $(LFLAGS_LAST)"
 	@echo "STANDARD = $(STANDARD)"
 	@echo "STANDARD_C = $(STANDARD_C)"
