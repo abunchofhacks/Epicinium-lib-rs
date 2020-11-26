@@ -578,12 +578,22 @@ pub fn challenge_ruleset_name(id: ChallengeId) -> Option<String>
 	Some(s.to_string_lossy().to_string()).filter(|s| !s.is_empty())
 }
 
-pub fn challenge_display_name(id: ChallengeId) -> String
+pub fn challenge_display_name(id: ChallengeId)
+	-> Result<String, InterfaceError>
 {
+	let buffer = unsafe { epicinium_buffer_allocate() };
+	if buffer == std::ptr::null_mut()
+	{
+		return Err(InterfaceError::AllocationFailed);
+	}
 	let s: &CStr = unsafe {
-		CStr::from_ptr(epicinium_challenge_display_name(id.0)) //
+		CStr::from_ptr(epicinium_challenge_display_name(id.0, buffer)) //
 	};
-	s.to_string_lossy().to_string()
+	let display_name_str = s.to_string_lossy().to_string();
+	unsafe {
+		epicinium_buffer_deallocate(buffer);
+	}
+	Ok(display_name_str)
 }
 
 pub fn challenge_panel_picture_name(id: ChallengeId) -> String
@@ -610,8 +620,15 @@ pub fn challenge_steam_short_key(id: ChallengeId) -> String
 	s.to_string_lossy().to_string()
 }
 
-pub fn challenge_mission_briefing(id: ChallengeId) -> serde_json::Value
+pub fn challenge_mission_briefing(
+	id: ChallengeId,
+) -> Result<serde_json::Value, InterfaceError>
 {
+	let buffer = unsafe { epicinium_buffer_allocate() };
+	if buffer == std::ptr::null_mut()
+	{
+		return Err(InterfaceError::AllocationFailed);
+	}
 	let num = unsafe { epicinium_challenge_briefing_size(id.0) };
 	let mut data = serde_json::Map::with_capacity(num);
 	for i in 0..num
@@ -621,12 +638,15 @@ pub fn challenge_mission_briefing(id: ChallengeId) -> serde_json::Value
 		};
 		let key = key.to_string_lossy().to_string();
 		let value: &CStr = unsafe {
-			CStr::from_ptr(epicinium_challenge_briefing_value(id.0, i)) //
+			CStr::from_ptr(epicinium_challenge_briefing_value(id.0, i, buffer))
 		};
 		let value = value.to_string_lossy().to_string();
 		data.insert(key, serde_json::Value::String(value));
 	}
-	serde_json::Value::Object(data)
+	unsafe {
+		epicinium_buffer_deallocate(buffer);
+	}
+	Ok(serde_json::Value::Object(data))
 }
 
 pub fn log_initialize(severity: Severity)
@@ -777,13 +797,20 @@ extern "C" {
 	fn epicinium_challenge_bot_difficulty(id: u16) -> u8;
 	fn epicinium_challenge_map_name(id: u16) -> *const c_char;
 	fn epicinium_challenge_ruleset_name(id: u16) -> *const c_char;
-	fn epicinium_challenge_display_name(id: u16) -> *const c_char;
+	fn epicinium_challenge_display_name(
+		id: u16,
+		buffer: *mut Buffer,
+	) -> *const c_char;
 	fn epicinium_challenge_panel_picture_name(id: u16) -> *const c_char;
 	fn epicinium_challenge_discord_image_key(id: u16) -> *const c_char;
 	fn epicinium_challenge_steam_short_key(id: u16) -> *const c_char;
 	fn epicinium_challenge_briefing_size(id: u16) -> usize;
 	fn epicinium_challenge_briefing_key(id: u16, i: usize) -> *const c_char;
-	fn epicinium_challenge_briefing_value(id: u16, i: usize) -> *const c_char;
+	fn epicinium_challenge_briefing_value(
+		id: u16,
+		i: usize,
+		buffer: *mut Buffer,
+	) -> *const c_char;
 
 	fn epicinium_buffer_allocate() -> *mut Buffer;
 	fn epicinium_buffer_deallocate(tmp: *mut Buffer);
