@@ -132,7 +132,7 @@ bool Library::loadIndex(const std::string& filename)
 
 void Library::load()
 {
-	if (System::isFile(Locator::rulesetFilename(_latestrulesetname)))
+	if (System::isFile(Locator::rulesetResourceFilename(_latestrulesetname)))
 	{
 		// Cache the most recent bible.
 		loadBible(_latestrulesetname);
@@ -252,6 +252,9 @@ bool Library::saveBible(const std::string& rulesetname, const Bible& bible)
 {
 	std::string fname = Locator::rulesetFilename(rulesetname);
 	std::cout << "Saving '" << fname << "'..." << std::endl;
+	LOGI << "Saving '" << fname << "'...";
+
+	System::touchFile(fname);
 
 	std::ofstream file = System::ofstream(fname);
 	if (!file.is_open())
@@ -265,6 +268,7 @@ bool Library::saveBible(const std::string& rulesetname, const Bible& bible)
 	file << writer.write(bible.toJson());
 
 	std::cout << "Saved." << std::endl;
+	LOGI << "Saved.";
 
 	return true;
 }
@@ -272,6 +276,7 @@ bool Library::saveBible(const std::string& rulesetname, const Bible& bible)
 bool Library::addVersionToIndex(const Version& version)
 {
 	std::cout << "Adding " << version << " to the index..." << std::endl;
+	LOGD << "Adding " << version << " to the index...";
 
 	if (version.isRelease())
 	{
@@ -301,6 +306,7 @@ bool Library::addVersionToIndex(const Version& version)
 	}
 
 	std::cout << "Added." << std::endl;
+	LOGD << "Added.";
 
 	return true;
 }
@@ -313,6 +319,19 @@ const Bible& Library::loadBible(const Version& version)
 const Bible& Library::loadBible(const std::string& rulesetname)
 {
 	std::string fname = Locator::rulesetFilename(rulesetname);
+	if (System::isFile(fname))
+	{
+		// Use this.
+	}
+	else if (System::isFile(Locator::rulesetResourceFilename(rulesetname)))
+	{
+		fname = Locator::rulesetResourceFilename(rulesetname);
+	}
+	else if (System::isFile(Locator::rulesetAuthoredFilename(rulesetname)))
+	{
+		fname = Locator::rulesetAuthoredFilename(rulesetname);
+	}
+
 	std::ifstream file = System::ifstream(fname);
 	if (!file.is_open())
 	{
@@ -356,7 +375,9 @@ bool Library::exists(const std::string& rulesetname)
 
 	// As the server, we can serve any of the rulesets in our folder.
 	// As the client, we want to know if we have downloaded it already.
-	return System::isFile(Locator::rulesetFilename(rulesetname));
+	return System::isFile(Locator::rulesetFilename(rulesetname))
+		|| System::isFile(Locator::rulesetResourceFilename(rulesetname))
+		|| System::isFile(Locator::rulesetAuthoredFilename(rulesetname));
 }
 
 Bible Library::get(const std::string& rulesetname)
@@ -394,8 +415,7 @@ bool Library::store(const std::string& rulesetname, const Json::Value& json)
 	try
 	{
 		Bible bible(rulesetname, json);
-		saveBible(rulesetname, bible);
-		return true;
+		return saveBible(rulesetname, bible);
 	}
 	catch (ParseError& error)
 	{

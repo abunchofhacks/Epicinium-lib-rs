@@ -181,6 +181,10 @@ const std::vector<std::string>& Map::customPool()
 const std::vector<std::string>& Map::userPool()
 {
 	static std::vector<std::string> pool = {
+		{"1diyabl/A Game of Chess"},
+		{"1diyabl/Claustrophobia"},
+		{"1diyabl/Trenches"},
+		{"Fast_gag_pink_king/Big Hello from Russia"},
 		{"Overlord_Vadim/Abandoned Places"},
 		{"Overlord_Vadim/Civil War"},
 		{"Overlord_Vadim/Great Duel"},
@@ -193,6 +197,8 @@ const std::vector<std::string>& Map::userPool()
 		{"Overlord_Vadim/Triumvirate Islands"},
 		{"Overlord_Vadim/War Never Changes"},
 		{"Overlord_Vadim/Winter Confrontation"},
+		{"StormDrago/Lands of Tyrel"},
+		{"StormDrago/Republic of Carsus"},
 	};
 	return pool;
 }

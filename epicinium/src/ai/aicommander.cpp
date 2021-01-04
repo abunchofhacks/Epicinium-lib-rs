@@ -183,7 +183,8 @@ void AICommander::receiveChangesAsString(const std::string& changes)
 
 bool AICommander::wantsToPrepareOrders() const
 {
-	return (_phase == Phase::PLANNING && !_finished);
+	return (_phase == Phase::PLANNING && !_finished
+			&& !_gameover && !_defeated);
 }
 
 void AICommander::prepareOrders()

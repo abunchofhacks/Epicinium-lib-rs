@@ -474,8 +474,13 @@ COMPILE_BIN = $(C_CXX)
 COMPILE_CBN = $(C_CC)
 COMPILE_ALB = $(AR) rvs
 COMPILE_AIL = $(C_CXX) -shared -nodefaultlibs $(FPIC) -Wl,--gc-sections
-FPIC        = -fPIC -fvisibility=hidden -fvisibility-inlines-hidden\
+FPIC        = $(REAL_FPIC) -fvisibility=hidden -fvisibility-inlines-hidden\
               -ffunction-sections -fdata-sections
+ifeq ($(detected_OS),Windows)
+REAL_FPIC   =
+else
+REAL_FPIC   = -fPIC
+endif
 POSTCOMPILE = mv -f .dep/$*.Td .dep/$*.d
 
 # Headers and source files
