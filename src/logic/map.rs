@@ -27,6 +27,8 @@ use serde_derive::{Deserialize, Serialize};
 pub struct Metadata
 {
 	pub playercount: i32,
+	pub rows: i32,
+	pub cols: i32,
 
 	#[serde(rename = "pool")]
 	pub pool_type: PoolType,

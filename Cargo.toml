@@ -1,6 +1,6 @@
 [package]
 name = "epicinium_lib"
-version = "1.0.10"
+version = "1.0.11"
 authors = ["Sander in 't Veld <sanderintveld@hotmail.com>"]
 edition = "2018"
 license = "AGPL-3.0-or-later"
