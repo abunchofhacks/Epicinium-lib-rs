@@ -184,6 +184,7 @@ const std::vector<std::string>& Map::userPool()
 		{"1diyabl/A Game of Chess"},
 		{"1diyabl/Claustrophobia"},
 		{"1diyabl/Trenches"},
+		{"Clyde/Operation Badger Pass"},
 		{"Fast_gag_pink_king/Big Hello from Russia"},
 		{"Overlord_Vadim/Abandoned Places"},
 		{"Overlord_Vadim/Civil War"},

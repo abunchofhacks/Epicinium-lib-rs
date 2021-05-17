@@ -3567,7 +3567,7 @@ void Automaton::doRetaliationAttack(Cell from, Cell to,
 	// Declare a bypassed background unit, if any.
 	// Entrenched units do not provide a background.
 	bool bypassdefense = (taker.type == Descriptor::Type::BYPASS
-			&& (_bible.tileTrenches(_board.tile(to).type)
+			&& (!_bible.tileTrenches(_board.tile(to).type)
 				|| !_bible.trenchesHideBypassedUnit()
 				|| _bible.unitMechanical(_board.ground(to).type)));
 	if (bypassdefense)
@@ -5279,6 +5279,13 @@ void Automaton::doDefeat(const std::vector<Player>& defeats,
 		_activeidentifiers[player].clear();
 		// And filter them out of _activeplayers to avoid processing order
 		// _activeorders[_activeorderindices] on the next play() call.
+
+		// We will reveal the entire map to them.
+		if (std::find(_visionaries.begin(), _visionaries.end(), player)
+			== _visionaries.end())
+		{
+			_visionaries.push_back(player);
+		}
 	}
 
 	// Filter the defeated players out of _activeplayers.
@@ -5362,6 +5369,15 @@ void Automaton::doDefeat(const std::vector<Player>& defeats,
 
 		// Give all players vision of the entire map.
 		_visionaries = _players;
+		VisionTransition(_bible, _board, *this, vset).execute();
+		_changesets.push(vset);
+	}
+	else if (!defeats.empty())
+	{
+		// In a separate homogeneous changeset.
+		ChangeSet vset;
+
+		// Give all defeated players vision of the entire map.
 		VisionTransition(_bible, _board, *this, vset).execute();
 		_changesets.push(vset);
 	}

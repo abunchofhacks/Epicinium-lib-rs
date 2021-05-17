@@ -907,6 +907,7 @@ void AIRampantRhino::controlSettler(const Descriptor& unitdesc)
 	size_t length = 0;
 	for (; length < moves.size(); length++)
 	{
+		bool stop = false;
 		for (const Move& dir : {Move::E, Move::S, Move::W, Move::N})
 		{
 			if (dir == moves[length] || ::flip(dir) == moves[length]) continue;
@@ -924,13 +925,24 @@ void AIRampantRhino::controlSettler(const Descriptor& unitdesc)
 					&& _board.ground(at).owner == _player
 					&& at != from))
 			{
+				stop = true;
 				break;
 			}
 		}
+		if (stop) break;
 		at = at + moves[length];
 	}
 	if (length == 0) return;
-	if (length < moves.size()) moves.resize(length);
+	else if (length < moves.size())
+	{
+		moves.resize(length);
+		target = at;
+	}
+	else if (target != at)
+	{
+		LOGE << "Assertion failure";
+		DEBUG_ASSERT(target == at);
+	}
 
 	_newOrders.emplace_back(Order::Type::MOVE, unitdesc,
 		Descriptor::cell(target.pos()),
@@ -1670,6 +1682,7 @@ void AIRampantRhino::controlBlocker(const Descriptor& unitdesc)
 	size_t length = 0;
 	for (; length < moves.size(); length++)
 	{
+		bool stop = false;
 		for (const Move& dir : {Move::E, Move::S, Move::W, Move::N})
 		{
 			if (dir == moves[length] || ::flip(dir) == moves[length]) continue;
@@ -1687,13 +1700,24 @@ void AIRampantRhino::controlBlocker(const Descriptor& unitdesc)
 					&& _board.ground(at).owner == _player
 					&& at != from))
 			{
+				stop = true;
 				break;
 			}
 		}
+		if (stop) break;
 		at = at + moves[length];
 	}
 	if (length == 0) return;
-	if (length < moves.size()) moves.resize(length);
+	else if (length < moves.size())
+	{
+		moves.resize(length);
+		target = at;
+	}
+	else if (target != at)
+	{
+		LOGE << "Assertion failure";
+		DEBUG_ASSERT(target == at);
+	}
 
 	_newOrders.emplace_back(Order::Type::MOVE, unitdesc,
 		Descriptor::cell(target.pos()),
@@ -1804,6 +1828,7 @@ void AIRampantRhino::controlDefense(const Descriptor& unitdesc)
 	size_t length = 0;
 	for (; length < moves.size(); length++)
 	{
+		bool stop = false;
 		for (const Move& dir : {Move::E, Move::S, Move::W, Move::N})
 		{
 			if (dir == moves[length] || ::flip(dir) == moves[length]) continue;
@@ -1821,13 +1846,24 @@ void AIRampantRhino::controlDefense(const Descriptor& unitdesc)
 					&& _board.ground(at).owner == _player
 					&& at != from))
 			{
+				stop = true;
 				break;
 			}
 		}
+		if (stop) break;
 		at = at + moves[length];
 	}
 	if (length == 0) return;
-	if (length < moves.size()) moves.resize(length);
+	else if (length < moves.size())
+	{
+		moves.resize(length);
+		target = at;
+	}
+	else if (target != at)
+	{
+		LOGE << "Assertion failure";
+		DEBUG_ASSERT(target == at);
+	}
 
 	_newOrders.emplace_back(Order::Type::MOVE, unitdesc,
 		Descriptor::cell(target.pos()),
@@ -1964,6 +2000,7 @@ void AIRampantRhino::declareOffense(const Descriptor& unitdesc)
 	size_t length = 0;
 	for (; length < moves.size(); length++)
 	{
+		bool stop = false;
 		for (const Move& dir : {Move::E, Move::S, Move::W, Move::N})
 		{
 			if (dir == moves[length] || ::flip(dir) == moves[length]) continue;
@@ -1981,13 +2018,24 @@ void AIRampantRhino::declareOffense(const Descriptor& unitdesc)
 					&& _board.ground(at).owner == _player
 					&& at != from))
 			{
+				stop = true;
 				break;
 			}
 		}
+		if (stop) break;
 		at = at + moves[length];
 	}
 	if (length == 0) return;
-	if (length < moves.size()) moves.resize(length);
+	else if (length < moves.size())
+	{
+		moves.resize(length);
+		target = at;
+	}
+	else if (target != at)
+	{
+		LOGE << "Assertion failure";
+		DEBUG_ASSERT(target == at);
+	}
 
 	_newOrders.emplace_back(Order::Type::MOVE, unitdesc,
 		Descriptor::cell(target.pos()),
