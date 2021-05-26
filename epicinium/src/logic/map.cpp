@@ -60,6 +60,7 @@ std::ostream& operator<<(std::ostream& os, const PoolType& type)
 
 std::string Map::_resourcemapsfolder = "maps/";
 std::string Map::_authoredmapsfolder = "maps/";
+std::vector<Map::ExternalItem> Map::_cachedexternalitems = {};
 
 void Map::setResourceRoot(const std::string& root)
 {
@@ -95,6 +96,14 @@ void Map::setAuthoredRoot(const std::string& root)
 
 std::string Map::readOnlyFilename(const std::string& name)
 {
+	for (const auto& item : _cachedexternalitems)
+	{
+		if (item.uniqueTag == name)
+		{
+			return item.sourceFilename;
+		}
+	}
+
 	std::string fname = authoredFilename(name);
 	if (System::isFile(fname))
 	{
@@ -232,4 +241,47 @@ const std::vector<std::string>& Map::hiddenDioramaPool()
 		DIORAMA_MAPNAME,
 	};
 	return pool;
+}
+
+std::vector<std::string> Map::listAuthored()
+{
+	auto list = System::listDirectory(_authoredmapsfolder, ".map");
+	std::sort(list.begin(), list.end());
+	return list;
+}
+
+void Map::listExternalItem(ExternalItem&& newItem)
+{
+	LOGD << "Listing '" << newItem.uniqueTag << "'"
+		" (a.k.a. " << newItem.quotedName << ")"
+		": " << newItem.sourceFilename;
+
+	for (auto& item : _cachedexternalitems)
+	{
+		if (item.uniqueTag == newItem.uniqueTag)
+		{
+			item = newItem;
+			return;
+		}
+	}
+
+	_cachedexternalitems.emplace_back(newItem);
+}
+
+void Map::unlistExternalItem(const std::string& uniqueTag)
+{
+	LOGD << "Unlisting '" << uniqueTag << "'";
+	_cachedexternalitems.erase(
+		std::remove_if(
+			_cachedexternalitems.begin(),
+			_cachedexternalitems.end(),
+			[&](const ExternalItem& item) {
+				return item.uniqueTag == uniqueTag;
+			}),
+		_cachedexternalitems.end());
+}
+
+const std::vector<Map::ExternalItem>& Map::externalItems()
+{
+	return _cachedexternalitems;
 }

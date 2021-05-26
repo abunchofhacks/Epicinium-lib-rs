@@ -28,8 +28,11 @@
 
 class Game;
 class Challenge;
+class HostedGame;
+class Bot;
 enum class Player : uint8_t;
 enum class Role : uint8_t;
+enum class VisionType : uint8_t;
 
 
 class GameOwner
@@ -56,6 +59,14 @@ public:
 		const Role& role, const std::string& rulesetname,
 		uint32_t planningTime) = 0;
 	virtual std::weak_ptr<Game> startDiorama() = 0;
+
+	virtual std::weak_ptr<HostedGame> startHostedGame(
+		const std::vector<Player>& colors,
+		const std::vector<VisionType>& visiontypes,
+		const std::vector<std::string>& usernames,
+		const std::vector<Bot>& bots,
+		bool hasObservers,
+		const std::string& mapname, const std::string& rulesetname) = 0;
 
 	virtual void stopGame() = 0;
 };

@@ -43,7 +43,6 @@ public:
 		EVERYTHINGISFREE,
 		TRAMPLE,
 		HIGHSPEED,
-		TRAMPLE2,
 		INVESTMENT,
 		MORALE,
 	};
@@ -54,10 +53,7 @@ public:
 		_id(id)
 	{}
 
-	static Id current()
-	{
-		return MORALE;
-	}
+	static const std::vector<Id>& pool();
 
 protected:
 	const Id _id;

@@ -33,6 +33,21 @@
 #include "roundinfo.hpp"
 
 
+
+const std::vector<Challenge::Id>& Challenge::pool()
+{
+	static std::vector<Challenge::Id> pool = {
+		Challenge::Id::SHOWCASE,
+		Challenge::Id::ELIMINATION,
+		Challenge::Id::TRAMPLE,
+		Challenge::Id::MORALE,
+		Challenge::Id::EVERYTHINGISFREE,
+		Challenge::Id::HIGHSPEED,
+		Challenge::Id::INVESTMENT,
+	};
+	return pool;
+}
+
 static int tileCount(const Board& board, const TileType& tiletype)
 {
 	int count = 0;
@@ -77,7 +92,6 @@ Notice Challenge::check(const Id& id, const Bible&, const Board& board,
 		case ELIMINATION:
 		case EVERYTHINGISFREE:
 		case TRAMPLE:
-		case TRAMPLE2:
 		case HIGHSPEED:
 		case MORALE:
 		{
@@ -124,7 +138,6 @@ void Challenge::score(const Id& id, const Bible&, const Board&,
 		case ELIMINATION:
 		case EVERYTHINGISFREE:
 		case TRAMPLE:
-		case TRAMPLE2:
 		case HIGHSPEED:
 		case MORALE:
 		break;
@@ -245,7 +258,6 @@ void Challenge::award(const Id& id, const Bible& bible, const Board& board,
 		}
 		break;
 		case TRAMPLE:
-		case TRAMPLE2:
 		{
 			for (const Player& player : info._players)
 			{

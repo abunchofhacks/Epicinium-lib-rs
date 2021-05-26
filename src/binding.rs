@@ -38,7 +38,7 @@ use std::ffi::{CStr, CString};
 use serde_json;
 
 /**
- * Returned by `current_challenge_id`,
+ * Returned by `custom_challenge_id` and `challenge_pool_get`,
  * passed to `automaton_set_challenge`
  * and as the first argument of all functions starting with `challenge`.
  */
@@ -530,10 +530,22 @@ pub fn ai_descriptive_metadata(
 	Ok(metadata)
 }
 
-pub fn current_challenge_id() -> ChallengeId
+pub fn custom_challenge_id() -> ChallengeId
 {
-	let id = unsafe { epicinium_current_challenge_id() };
+	let id = unsafe { epicinium_custom_challenge_id() };
 	ChallengeId(id)
+}
+
+pub fn challenge_pool() -> Vec<ChallengeId>
+{
+	let len = unsafe { epicinium_challenge_pool_size() };
+	let mut pool = Vec::with_capacity(len);
+	for i in 0..len
+	{
+		let id = unsafe { epicinium_challenge_pool_get(i) };
+		pool.push(ChallengeId(id));
+	}
+	pool
 }
 
 pub fn challenge_key(id: ChallengeId) -> String
@@ -790,7 +802,9 @@ extern "C" {
 		buffer: *mut Buffer,
 	) -> *const c_char;
 
-	fn epicinium_current_challenge_id() -> u16;
+	fn epicinium_custom_challenge_id() -> u16;
+	fn epicinium_challenge_pool_size() -> usize;
+	fn epicinium_challenge_pool_get(i: usize) -> u16;
 	fn epicinium_challenge_key(id: u16) -> *const c_char;
 	fn epicinium_challenge_num_bots(id: u16) -> usize;
 	fn epicinium_challenge_bot_name(id: u16) -> *const c_char;

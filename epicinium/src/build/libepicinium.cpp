@@ -111,7 +111,9 @@ extern "C"
 	const char* epicinium_ai_descriptive_metadata(AILibrary* ai,
 		Buffer* buffer);
 
-	uint16_t epicinium_current_challenge_id();
+	uint16_t epicinium_custom_challenge_id();
+	size_t epicinium_challenge_pool_size();
+	uint16_t epicinium_challenge_pool_get(size_t i);
 	const char* epicinium_challenge_key(uint16_t id);
 	size_t epicinium_challenge_num_bots(uint16_t id);
 	const char* epicinium_challenge_bot_name(uint16_t id);
@@ -503,9 +505,17 @@ extern "C"
 		return buffer->str.c_str();
 	}
 
-	uint16_t epicinium_current_challenge_id()
+	uint16_t epicinium_custom_challenge_id()
 	{
-		return (uint16_t) Challenge::current();
+		return (uint16_t) Challenge::Id::CUSTOM;
+	}
+	size_t epicinium_challenge_pool_size()
+	{
+		return Challenge::pool().size();
+	}
+	uint16_t epicinium_challenge_pool_get(size_t i)
+	{
+		return (uint16_t) Challenge::pool()[i];
 	}
 	const char* epicinium_challenge_key(uint16_t id_as_u16)
 	{

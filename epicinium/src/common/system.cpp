@@ -25,12 +25,51 @@
 #include "source.hpp"
 
 
+#if defined __has_include
+#   if __has_include(<filesystem>)
+#     include <filesystem>
+      namespace fs = std::filesystem;
+#   else
+#     include <experimental/filesystem>
+      namespace fs = std::experimental::filesystem;
+#   endif
+#else
+#   include <filesystem>
+    namespace fs = std::filesystem;
+#endif
+
+std::vector<std::string> System::listDirectory(const std::string& dirname,
+	const std::string& extension)
+{
+	std::string extensionPattern = extension;
+	if (extensionPattern.empty())
+	{
+		extensionPattern = ".non-existing-LkYlNtDpRCybaYTWpdyMvHGnJtHsY";
+	}
+	else if (extensionPattern[0] != '.')
+	{
+		extensionPattern = "." + extensionPattern;
+	}
+
+	std::vector<std::string> filenames;
+	for(const auto& p : fs::directory_iterator(dirname))
+	{
+		if (p.path().extension() == extensionPattern)
+		{
+			filenames.push_back(p.path().stem().string());
+		}
+	}
+	return filenames;
+}
+
+
 #ifdef PLATFORMUNIX
 /* ################################## UNIX ################################## */
 
 #include <unistd.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <limits.h>
 
 
 FILE* System::fopen(const std::string& filename, const char* mode)
@@ -338,6 +377,18 @@ void System::makeLink(const std::string& filename, const char* target)
 		LOGE << "Failed to symlink '" << filename << "'";
 		return;
 	}
+}
+
+std::string System::absolutePath(const std::string& filename)
+{
+	char buffer[PATH_MAX];
+	const char* result = realpath(filename.c_str(), buffer);
+	if (result == nullptr)
+	{
+		LOGE << "Failed to get absolute path of " << filename;
+		return filename;
+	}
+	return std::string(result);
 }
 
 /* ################################## UNIX ################################## */
@@ -684,6 +735,18 @@ void System::makeLink(const std::string&, const char*)
 {
 	LOGE << "Unimplemented";
 	DEBUG_ASSERT(false);
+}
+
+std::string System::absolutePath(const std::string& filename)
+{
+	char buffer[_MAX_PATH];
+	const char* result = _fullpath(buffer, filename.c_str(), _MAX_PATH);
+	if (result == nullptr)
+	{
+		LOGE << "Failed to get absolute path of " << filename;
+		return filename;
+	}
+	return std::string(result);
 }
 
 /* ################################# WINDOWS ################################ */
