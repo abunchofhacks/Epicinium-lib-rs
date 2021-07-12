@@ -48,7 +48,8 @@ public:
 	virtual ~GameOwner() = default;
 
 	virtual std::weak_ptr<Game> startGame(imploding_ptr<Game> game) = 0;
-	virtual std::weak_ptr<Game> startChallenge(const Challenge& challenge) = 0;
+	virtual std::weak_ptr<Game> startChallenge(const Challenge& challenge,
+		const std::string& name = "") = 0;
 	virtual std::weak_ptr<Game> startGame(
 		const Player& player, const std::string& rulesetname,
 		uint32_t planningTime) = 0;
@@ -69,4 +70,6 @@ public:
 		const std::string& mapname, const std::string& rulesetname) = 0;
 
 	virtual void stopGame() = 0;
+
+	virtual void reportAwardedStars(int /*amount*/) {};
 };

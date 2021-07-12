@@ -47,6 +47,7 @@ public:
 		std::string uniqueTag;
 		std::string quotedName;
 		std::string sourceFilename;
+		Json::Value metadata;
 	};
 
 private:

@@ -131,3 +131,13 @@ const std::vector<std::string>& AI::hiddenPool()
 	};
 	return pool;
 }
+
+const std::vector<std::string>& AI::selfHostedPool()
+{
+	static std::vector<std::string> pool = {
+		"RampantRhino",
+		"HungryHippo",
+		"ChargingCheetah",
+	};
+	return pool;
+}

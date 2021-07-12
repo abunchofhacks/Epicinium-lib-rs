@@ -52,6 +52,10 @@ std::vector<std::string> System::listDirectory(const std::string& dirname,
 	}
 
 	std::vector<std::string> filenames;
+	if (!System::isDirectory(dirname))
+	{
+		return filenames;
+	}
 	for(const auto& p : fs::directory_iterator(dirname))
 	{
 		if (p.path().extension() == extensionPattern)

@@ -78,9 +78,30 @@ void Board::load(const std::string& mapname)
 	std::string line;
 
 	std::string fname = Map::readOnlyFilename(mapname);
+	if (!System::isFile(fname))
+	{
+		LOGF << "Failed to load map '" << mapname << "' (" << fname << "): "
+			<< "file does not exist";
+		throw std::runtime_error("failed to load map " + mapname + ": \t"
+				+ "file does not exist");
+	}
+
 	std::ifstream file = System::ifstream(fname);
-	if (!std::getline(file, line) || !reader.parse(line, metadata)
-		|| !metadata.isObject())
+	if (!file)
+	{
+		LOGF << "Failed to load map '" << mapname << "' (" << fname << "): "
+			<< "failed to open file";
+		throw std::runtime_error("failed to load map " + mapname + ": \t"
+				+ "failed to open file");
+	}
+	else if (!std::getline(file, line) || line.empty())
+	{
+		LOGF << "Failed to load map '" << mapname << "' (" << fname << "): "
+			<< "failed to read line";
+		throw std::runtime_error("failed to load map " + mapname + ": \t"
+				+ "failed to read line");
+	}
+	else if (!reader.parse(line, metadata) || !metadata.isObject())
 	{
 		// Try old style.
 		file.close();

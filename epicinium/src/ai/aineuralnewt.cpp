@@ -28,6 +28,9 @@
 #include "aim.hpp"
 #include "bible.hpp"
 
+ // windows.h is being annoying
+#undef near
+
 
 std::string AINeuralNewt::ainame() const
 {
@@ -937,7 +940,10 @@ void AINeuralNewt::moveDefense(const Descriptor& unitdesc,
 	for (Cell at : _board)
 	{
 		if (_board.gas(at)) continue;
-		if (_board.frostbite(at)) continue;
+		if (_board.frostbite(at)
+			// In Spring, frostbite is used to indicate "Chilled" units.
+			&& !(_bible.frostbiteGivesColdFeet()
+				&& _bible.chaosMinFrostbite(_season) < 0)) continue;
 		if (_board.firestorm(at)) continue;
 		if (_board.death(at)) continue;
 		int threatdis = _enemyBaseFloodfill.steps(at);

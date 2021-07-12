@@ -29,6 +29,9 @@
 #include "aim.hpp"
 #include "bible.hpp"
 
+ // windows.h is being annoying
+#undef near
+
 
 std::string AIRampantRhino::ainame() const
 {
@@ -1530,6 +1533,14 @@ bool AIRampantRhino::checkLockdown(const Descriptor& unitdesc)
 {
 	Cell at = _board.cell(unitdesc.position);
 
+	bool canUseAbilities = true;
+	if (_bible.frostbiteGivesColdFeet()
+		// In Spring, frostbite is used to indicate "Chilled" units.
+		&& _board.frostbite(at) && _bible.chaosMinFrostbite(_season) < 0)
+	{
+		canUseAbilities = false;
+	}
+
 	std::vector<Move> dirs = {Move::E, Move::S, Move::W, Move::N};
 	std::random_shuffle(dirs.begin(), dirs.end());
 	for (const Move& move : dirs)
@@ -1540,7 +1551,7 @@ bool AIRampantRhino::checkLockdown(const Descriptor& unitdesc)
 		if (_board.ground(target)
 			&& _board.ground(target).owner != _player)
 		{
-			if (canUseCombatAbilities())
+			if (canUseAbilities && canUseCombatAbilities())
 			{
 				UnitType unittype = _board.ground(at).type;
 				std::vector<Bible::TileBuild> shapes = _bible.unitShapes(
@@ -1567,6 +1578,7 @@ bool AIRampantRhino::checkLockdown(const Descriptor& unitdesc)
 						Descriptor::cell(target.pos()));
 				}
 			}
+
 			return true;
 		}
 	}
@@ -1587,6 +1599,13 @@ void AIRampantRhino::controlIdleDefense(const Descriptor& unitdesc)
 	if (!canUseCombatAbilities()) return;
 
 	Cell at = _board.cell(unitdesc.position);
+
+	if (_bible.frostbiteGivesColdFeet()
+		// In Spring, frostbite is used to indicate "Chilled" units.
+		&& _board.frostbite(at) && _bible.chaosMinFrostbite(_season) < 0)
+	{
+		return;
+	}
 
 	std::vector<Move> dirs = {Move::E, Move::S, Move::W, Move::N};
 	std::random_shuffle(dirs.begin(), dirs.end());
@@ -1612,6 +1631,13 @@ void AIRampantRhino::controlIdleDefense(const Descriptor& unitdesc)
 void AIRampantRhino::controlCaptor(const Descriptor& unitdesc)
 {
 	Cell at = _board.cell(unitdesc.position);
+
+	if (_bible.frostbiteGivesColdFeet()
+		// In Spring, frostbite is used to indicate "Chilled" units.
+		&& _board.frostbite(at) && _bible.chaosMinFrostbite(_season) < 0)
+	{
+		return;
+	}
 
 	if (_board.tile(at)
 		&& _board.tile(at).owner != _player
@@ -1643,7 +1669,10 @@ void AIRampantRhino::controlBlocker(const Descriptor& unitdesc)
 		if (at == from) continue;
 		if (_board.ground(at)) continue;
 		if (_board.gas(at)) continue;
-		if (_board.frostbite(at)) continue;
+		if (_board.frostbite(at)
+			// In Spring, frostbite is used to indicate "Chilled" units.
+			&& !(_bible.frostbiteGivesColdFeet()
+				&& _bible.chaosMinFrostbite(_season) < 0)) continue;
 		if (_board.firestorm(at)) continue;
 		if (_board.death(at)) continue;
 		if (isTarget(at.pos())) continue;
@@ -1758,7 +1787,10 @@ void AIRampantRhino::controlDefense(const Descriptor& unitdesc)
 		if (at != from && _board.ground(at)
 				&& _board.ground(at).owner == _player) continue;
 		if (_board.gas(at)) continue;
-		if (_board.frostbite(at)) continue;
+		if (_board.frostbite(at)
+			// In Spring, frostbite is used to indicate "Chilled" units.
+			&& !(_bible.frostbiteGivesColdFeet()
+				&& _bible.chaosMinFrostbite(_season) < 0)) continue;
 		if (_board.firestorm(at)) continue;
 		if (_board.death(at)) continue;
 		if (isTarget(at.pos())) continue;
@@ -1911,7 +1943,10 @@ void AIRampantRhino::declareOffense(const Descriptor& unitdesc)
 		if (at != from && _board.ground(at)
 				&& _board.ground(at).owner == _player) continue;
 		if (_board.gas(at)) continue;
-		if (_board.frostbite(at)) continue;
+		if (_board.frostbite(at)
+			// In Spring, frostbite is used to indicate "Chilled" units.
+			&& !(_bible.frostbiteGivesColdFeet()
+				&& _bible.chaosMinFrostbite(_season) < 0)) continue;
 		if (_board.firestorm(at)) continue;
 		if (_board.death(at)) continue;
 		if (isTarget(at.pos())) continue;
@@ -2054,6 +2089,13 @@ void AIRampantRhino::controlBombarder(const Descriptor& unitdesc)
 
 	Cell from = _board.cell(unitdesc.position);
 	const UnitToken& unit = _board.ground(from);
+
+	if (_bible.frostbiteGivesColdFeet()
+		// In Spring, frostbite is used to indicate "Chilled" units.
+		&& _board.frostbite(from) && _bible.chaosMinFrostbite(_season) < 0)
+	{
+		return;
+	}
 
 	UnitType unittype = unit.type;
 	int rangeMin = _bible.unitRangeMin(unittype);

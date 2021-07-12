@@ -129,6 +129,14 @@ std::string Map::authoredFilename(const std::string& name)
 
 Json::Value Map::loadMetadata(const std::string& name)
 {
+	for (const auto& item : _cachedexternalitems)
+	{
+		if (item.uniqueTag == name)
+		{
+			return item.metadata;
+		}
+	}
+
 	try
 	{
 		std::ifstream file = System::ifstream(readOnlyFilename(name));

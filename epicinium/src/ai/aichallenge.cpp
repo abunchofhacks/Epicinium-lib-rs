@@ -37,21 +37,14 @@ const char* AIChallenge::getKey(const Challenge::Id& id)
 	switch (id)
 	{
 		case CUSTOM: return "";
-		// OLD: "showcase_2018_07_04";
-		// OLD: "elimination_2017_07_20";
-		// OLD: "everythingisfree_2018_07_16";
 		// OLD: "trample_2017_08_01";
-		// OLD: "trample_2018_11_26";
-		// OLD: "highspeed_2018_09_21";
-		// OLD: "investment_2019_04_15";
-		// OLD: "morale_2020_05_06";
-		case SHOWCASE: return "showcase_2021_05_25";
-		case ELIMINATION: return "elimination_2021_05_25";
-		case EVERYTHINGISFREE: return "everythingisfree_2021_05_25";
-		case TRAMPLE: return "trample_2021_05_25";
-		case HIGHSPEED: return "highspeed_2021_05_25";
-		case INVESTMENT: return "investment_2021_05_25";
-		case MORALE: return "morale_2021_05_25";
+		case SHOWCASE: return "showcase_2018_07_04";
+		case ELIMINATION: return "elimination_2017_07_20";
+		case EVERYTHINGISFREE: return "everythingisfree_2018_07_16";
+		case TRAMPLE: return "trample_2018_11_26";
+		case HIGHSPEED: return "highspeed_2018_09_21";
+		case INVESTMENT: return "investment_2019_04_15";
+		case MORALE: return "morale_2020_05_06";
 	}
 	return "";
 }
@@ -165,7 +158,7 @@ const char* AIChallenge::getRulesetName(const Challenge::Id& id)
 {
 	switch (id)
 	{
-		case CUSTOM: return "";
+		case CUSTOM: return "challenge_custom";
 		case SHOWCASE: return "";
 		case ELIMINATION: return "";
 		case EVERYTHINGISFREE: return "challenge_everythingisfree";
