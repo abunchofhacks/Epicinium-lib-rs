@@ -21,8 +21,6 @@
  * Sander in 't Veld (sander@abunchofhacks.coop)
  */
 
-use serde_json;
-
 #[derive(Debug)]
 pub enum InterfaceError
 {

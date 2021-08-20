@@ -55,7 +55,7 @@ fn main()
 	let variant_filename = format!("{}/epicinium/bin/variant", out_dir);
 	let mut file = std::fs::File::create(variant_filename)
 		.expect("failed to create variant");
-	write!(file, "{}\n", variant).expect("failed to write variant");
+	writeln!(file, "{}", variant).expect("failed to write variant");
 
 	let working_dir = format!("{}/epicinium", out_dir);
 	let working_path = std::path::Path::new(&working_dir);

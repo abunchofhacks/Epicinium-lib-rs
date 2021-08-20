@@ -35,8 +35,6 @@ use log::{debug, error, info, trace, warn};
 use libc::c_char;
 use std::ffi::{CStr, CString};
 
-use serde_json;
-
 /**
  * Returned by `custom_challenge_id` and `challenge_pool_get`,
  * passed to `automaton_set_challenge`
@@ -101,7 +99,7 @@ pub fn allocate_automaton(
 	let ptr = unsafe {
 		epicinium_automaton_allocate(playercount, ruleset_name.as_ptr())
 	};
-	if ptr == std::ptr::null_mut()
+	if ptr.is_null()
 	{
 		return Err(InterfaceError::AllocationFailed);
 	}
@@ -113,7 +111,7 @@ pub fn allocate_automaton(
 		}
 	}
 	let buffer = unsafe { epicinium_buffer_allocate() };
-	if buffer == std::ptr::null_mut()
+	if buffer.is_null()
 	{
 		return Err(InterfaceError::AllocationFailed);
 	}
@@ -465,12 +463,12 @@ pub fn allocate_ai(
 			character,
 		)
 	};
-	if ptr == std::ptr::null_mut()
+	if ptr.is_null()
 	{
 		return Err(InterfaceError::AllocationFailed);
 	}
 	let buffer = unsafe { epicinium_buffer_allocate() };
-	if buffer == std::ptr::null_mut()
+	if buffer.is_null()
 	{
 		return Err(InterfaceError::AllocationFailed);
 	}
@@ -594,7 +592,7 @@ pub fn challenge_display_name(id: ChallengeId)
 	-> Result<String, InterfaceError>
 {
 	let buffer = unsafe { epicinium_buffer_allocate() };
-	if buffer == std::ptr::null_mut()
+	if buffer.is_null()
 	{
 		return Err(InterfaceError::AllocationFailed);
 	}
@@ -637,7 +635,7 @@ pub fn challenge_mission_briefing(
 ) -> Result<serde_json::Value, InterfaceError>
 {
 	let buffer = unsafe { epicinium_buffer_allocate() };
-	if buffer == std::ptr::null_mut()
+	if buffer.is_null()
 	{
 		return Err(InterfaceError::AllocationFailed);
 	}
